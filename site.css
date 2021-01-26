@@ -23,7 +23,12 @@ body {
 	row-gap: 1em;
 	place-items: center;
 	text-align: center;
-	height: 95vh;
+}
+
+@media only and screen (min-width: 1024px) {
+	.container {
+		height: 95vh;
+	}
 }
 
 .container > header { grid-area: header; }
@@ -42,7 +47,7 @@ body {
 	font-size: 80vh;
 }
 
-footer button {
+button {
 	background-color: #1A5E25;
 	border: 2px solid #154c1e;
 	border-radius: 0.5em;
@@ -55,19 +60,19 @@ footer button {
 	transition: border 0.25s, background-color 0.25s;
 }
 
-footer button:disabled {
+button:disabled {
 	background-color: #6a9571;
 	border: 1px solid #6c8971;
 	color: #ddd;
 }
 
-footer button:hover {
+button:hover {
 	background-color: #08af24;
 	border: 2px solid #067518;
 	transition: border 0.25s, background-color 0.25s;
 }
 
-footer button:hover:disabled {
+button:hover:disabled {
 	background-color: #629d6c;
 }
 
@@ -77,4 +82,15 @@ footer button:hover:disabled {
 
 .incorrect-msg {
 	color: #c42207;
+}
+
+#splash {
+	z-index: 5;
+}
+
+main countdown-clock {
+	position: fixed;
+	right: 1em;
+	top: 1em;
+	
 }

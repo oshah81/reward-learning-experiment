@@ -52,7 +52,8 @@
 		{ "note": "A#", "octave": 4, "freq": 3729.310092144719331, "alignment": 1100 },
 		{ "note": "B",  "octave": 4, "freq": 3951.066410048992894, "alignment": 1110 }
 	],
-	"practicetrials": 10,
+	"practicetrials": 5,
+	"totaltrials": 100,
 	"defaultOctave": 1,
 	"keymap": [
 		{"key": "d", "note": "C" },

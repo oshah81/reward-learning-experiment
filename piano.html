@@ -34,6 +34,7 @@
 		<main>
 			<section class="page-1">
 				<h1>Parkinsons trial</h1>
+				<p>Press enter to continue</p>
 			</section>
 			<section class="page-2" hidden="hidden">
 				<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
@@ -118,32 +119,113 @@
 			</section>
 
 			<section class="page-12" hidden="hidden">
-				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.
-				Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+				<div class="image-position">
+					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
+					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
+				</div>
+			</section>
+
+			<section class="page-13" hidden="hidden">
+				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+				<div class="image-position">
+					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
+					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
+				</div>
+				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+			</section>
+
+			<section class="page-14" hidden="hidden">
+				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+				<div class="image-position">
+					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
+					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
+				</div>
+				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+				<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
+				obtain a reward (5 points) or not.</p>
+			</section>
+
+			<section class="page-15" hidden="hidden">
+				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+				<div class="image-position">
+					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
+					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
+				</div>
+				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+				<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
+				obtain a reward (5 points) or not.</p>
+				<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
+				likely give you reward!</p>
+			</section>
+
+			<section class="page-16" hidden="hidden">
+				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+				<div class="image-position">
+					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
+					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
+				</div>
+				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+				<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
+				obtain a reward (5 points) or not.</p>
+				<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
+				likely give you reward!</p>
+				<p>Careful though: The reward (points) associated with each sequence will change from time to time. So pay attention
+				and adapt your decisions if you think that the conditions changed.</p>
+			</section>
+
+			<section class="page-17" hidden="hidden">
+				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
 				<div class="image-position">
 					<img src="fractal1.png" class="clickable" alt="Pink button" style="width: 200px; height: 200px;" data-page="1" />
 					<img src="fractal2.png" class="clickable" alt="Yellow button" style="width: 200px; height: 200px;" data-page="2" />
 				</div>
+				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
 				<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-				obtain reward (5 points) or not. Your aim is to obtain as many points as possible at the end of this study, so play the
-				sequence you think will more likely give you reward! Careful though: The reward (points) associated with each sequence
-				will change from time to time. So pay attention and adapt your decisions if you think that the conditions changed.</p>
+				obtain a reward (5 points) or not.</p>
+				<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
+				likely give you reward!</p>
+				<p>Careful though: The reward (points) associated with each sequence will change from time to time. So pay attention
+				and adapt your decisions if you think that the conditions changed.</p>
 				<p>Press 1 (or click the purple icon) to choose sequence 1.<p>
 				<p>Press 2 (or click the yellow icon) to choose sequence 2.</p>
 			</section>
 
-			<section class="page-13" hidden="hidden">
+			<section class="page-18" hidden="hidden">
+			</section>
+
+			<section class="page-19" hidden="hidden">
 				<piano-player notes="kgjh" pace="1.0" volumecontrol="0.5"></piano-player>
+				<countdown-clock width="100" time="5.0"></countdown-clock>
 				<p class="statusLbl">Play sequence.</p>
 				<img src="fractal2.png" class="active-icon" alt="Yellow button" style="width: 200px; height: 200px;" />
 			</section>
 
-			<section class="page-14" hidden="hidden">
-				<h2 class="statusLbl incorrect-msg">Wrong Sequence. You don't get the points</h2>
+			<section class="page-20" hidden="hidden">
+				<h2 class="statusLbl incorrect-msg">Something went wrong.<br/>You earned 0 points.</h2>
 			</section>
 
-			<section class="page-15" hidden="hidden">
-				<h2 class="statusLbl correct-msg">That was the correct sequence. You get 1 points.</h2>
+			<section class="page-21" hidden="hidden">
+				<h2 class="statusLbl correct-msg">Correct!<br/>You get 10 points.</h2>
+			</section>
+
+			<section class="page-22" hidden="hidden">
+				<h2 class="statusLbl incorrect-msg">You ran out of time to play the sequence, and lost the points.</h2>
+			</section>
+
+			<section class="page-23" hidden="hidden">
+				<h2>+</h2>
+			</section>
+
+			<section class="page-24" hidden="hidden">
+				<p class="scoreboard">Your score: </p>
+				<div class="image-position">
+					<img src="fractal1.png" class="clickable" alt="Pink button" style="width: 200px; height: 200px;" data-page="1" />
+					<img src="fractal2.png" class="clickable" alt="Yellow button" style="width: 200px; height: 200px;" data-page="2" />
+				</div>
+				<p>In this round, you need to pick the correct icon and play the sequence. Be careful though! only one of the sequences will give you the maximum number of points.</p>
+				<p>Press 1 (or click the purple icon) to choose sequence 1.<p>
+				<p>Press 2 (or click the yellow icon) to choose sequence 2.</p>
 			</section>
 		</main>
 		<footer>
@@ -154,68 +236,42 @@
 		<option value="0.0" label="Mute">
 		<option value="1.0" label="100%">
 	</datalist>
-	<div id="splash" hidden="hidden">6</div>
+	<div id="splash" hidden="hidden"><countdown-clock width="500" time="0.5"></countdown-clock></div>
 
 	<script type="module">
-		import { setupVolumeControl, setupIcons, keyUpManager, keyDownManager } from "./script-helpers.js";
+		import { setupVolumeControl, setupIcons, keyUpManager, keyDownManager, navigateToPage } from "./script-helpers.js";
 
 		setupVolumeControl();
 		setupIcons();
-		document.addEventListener("keydown", async evt => await keyDownManager(evt));
+		document.addEventListener("keydown", async evt => await keyDownManager(evt, evt.key));
 		document.addEventListener("keyup", async evt => await keyUpManager(evt, evt.key));
 
 		globalThis.onNextPage = async event => {
 			let round = globalThis.pageConfig.setup.round;
-			if (round === 14) {
-				document.querySelector(".page-14").hidden = true;
-				document.querySelector(".page-15").hidden = true;
-				round = 12;
-			} else if (round === 15) {
-				document.querySelector(".page-14").hidden = true;
-				document.querySelector(".page-15").hidden = true;
-				round = 12;
+			if (round === 24) {
+				round = 18;
+			} else if (round === 20 || round === 21 || round === 22) {
+				round = 23;
 			} else {
 				round++;
 			}
 			globalThis.pageConfig.setup.round = round;
-			eventLog.push({ type: "startNextRound", time: performance.now(), round: round });
-
-			document.querySelector(".page-" + parseInt(round-1)).hidden = true;
-			document.querySelector(".page-" + parseInt(round)).hidden = false;
-			
-			if (round === 4) {
-				const activePiano = document.querySelector("section.page-4 piano-player");
-				await activePiano.playNextRound();
-			} else if (round === 6) {
-				document.getElementById("nextButton").disabled = true;
-			} else if (round == 7) {
-				document.getElementById("nextButton").disabled = false;
-			} else if (round === 9) {
-				const activePiano = document.querySelector("section.page-9 piano-player");
-				await activePiano.playNextRound();
-			} else if (round === 11) {
-				document.getElementById("nextButton").disabled = true;
-			} else if (round === 12) {
-				document.getElementById("nextButton").hidden = true;
-				document.getElementById("nextButton").disabled = true;
-				handleRound12();
-			} else if (round === 13) {
-				document.getElementById("nextButton").hidden = true;
-				document.getElementById("nextButton").disabled = true;
-			} else if (round === 14 || round === 14) {
-				document.getElementById("nextButton").hidden = false;
-				document.getElementById("nextButton").disabled = false;
-			}
+			await navigateToPage(event);
 		};
-
-		function handleRound12() {
-		}
 
 	</script>
 	<script type="module">
 		import PianoPlayerElement from "./piano-player.js";
+		import CountDownClockElement from "./countdown-clock.js";
 
 		customElements.define("piano-player", PianoPlayerElement);
+		customElements.define("countdown-clock", CountDownClockElement);
+	</script>
+	<script type="module">
+		import { navigateToPage, timeoutManager } from "./script-helpers.js";
+
+		document.querySelector(".page-19 > countdown-clock").addEventListener("timeout", async evt => await timeoutManager(evt));
+		navigateToPage();
 	</script>
 </body>
 </html>
