@@ -1,15 +1,8 @@
 export default class ConfigManager {
 	constructor() {
-		if (!sessionStorage.setup) {
-			sessionStorage.setup = JSON.stringify({
-				eventLog: [],
-				round: 1,
-				trial: 0,
-				version: 1,
-				score: 0,
-				id: 0
-			});
-		}
+		// if (!sessionStorage.setup) {
+		this.newGame();
+		// }
 		this.setup = JSON.parse(sessionStorage.setup);
 
 		this._config = null;
@@ -51,13 +44,21 @@ export default class ConfigManager {
 	}
 
 	newGame() {
+		sessionStorage.setup = JSON.stringify({
+			eventLog: [],
+			round: 1,
+			trial: 0,
+			version: 1,
+			score: 0,
+			id: 0
+		});
 	}
 
 	flush() {
-		sessionStorage.setup = JSON.stringify(this.setup);
+		// sessionStorage.setup = JSON.stringify(this.setup);
 	}
 
-	save() {
+	async save() {
 		this.flush();
 		
 	}

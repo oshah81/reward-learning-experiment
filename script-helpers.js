@@ -1,4 +1,14 @@
-async function wait(ms) {
+
+const pressedKeys = new Set();
+const randomVals = generateRandomValues();
+
+function generateRandomValues() {
+	let arr = new Uint16Array(100);
+	crypto.getRandomValues(arr);
+	return Array.from(arr).map(x => x/65536.0);
+}
+
+function wait(ms) {
 	return new Promise(resolve => {
 		setTimeout(resolve, ms);
 	});
@@ -30,14 +40,6 @@ function setupIcons() {
 	}
 }
 
-function generateRandomValues() {
-	let arr = new Uint16Array(100);
-	crypto.getRandomValues(arr);
-	return Array.from(arr).map(x => x/65536.0);
-}
-
-const randomVals = generateRandomValues();
-
 function checkProbabilityOfWin(activePiano) {
 	if (globalThis.pageConfig.setup.trial >= randomVals.length - 1) {
 		throw new Error("out of range");
@@ -67,7 +69,7 @@ function evaluateSequence(roundStart, keymap, correctSequence) {
 	let typedCharacters = "";
 	const updatedEventLogs = [];
 	let res = 0;
-	
+
 	for (let i = roundStart; i < eventLog.length; i++) {
 		const elem = eventLog[i];
 		if (elem.type !== "keydown") {
@@ -152,10 +154,10 @@ function checkStep19(piano) {
 	return notesPlayed;
 }
 
-async function timeoutManager(evt) {
+function timeoutManager(evt) {
 	globalThis.pageConfig.setup.round = 21;
 
-	await navigateToPage(evt);
+	return navigateToPage(evt);
 }
 
 function countCorrectSequences(piano, requiredTrials) {
@@ -178,27 +180,25 @@ function countCorrectSequences(piano, requiredTrials) {
 	return trials;
 }
 
-async function gamePage(icon, evt) {
+function gamePage(icon, evt) {
 	globalThis.pageConfig.setup.round = 18;
 	globalThis.pageConfig.setup.trial++;
 	document.querySelector(".page-19 > piano-player").dataset.sequence = icon;
 
 	if (icon === 1) {
 		document.querySelector(".page-19 > piano-player").notes = "gjhk";
-		document.querySelector(".page-19 > .active-icon").src = "fractal1.png";
+		document.querySelector(".page-19 > .active-icon").src = "https://oshah81.github.io/rtanx/fractal1.png";
 		document.querySelector(".page-19 > .statusLbl").textContent = "Play Sequence 1";
 	} else {
 		document.querySelector(".page-19 > piano-player").notes = "kgjh";
-		document.querySelector(".page-19 > .active-icon").src = "fractal2.png";
+		document.querySelector(".page-19 > .active-icon").src = "https://oshah81.github.io/rtanx/fractal2.png";
 		document.querySelector(".page-19 > .statusLbl").textContent = "Play Sequence 2";
 	}
 
-	await navigateToPage(evt);
+	return navigateToPage(evt);
 }
 
-const pressedKeys = new Set();
-
-async function keyDownManager(evt, key) {
+function keyDownManager(evt, key) {
 	if (typeof evt.repeat !== "undefined" && evt.repeat) {
 		return;
 	}
@@ -214,11 +214,11 @@ async function keyDownManager(evt, key) {
 		if (key === "F1") {
 			evt.preventDefault();
 			evt.stopPropagation();
-			await activePiano.playNextRound();
+			activePiano.playNextRound();
 			return false;
 		}
-	
-		await activePiano.keyNotePressed(evt, key);
+
+		activePiano.keyNotePressed(evt, key);
 	}
 }
 
@@ -229,12 +229,12 @@ async function keyUpManager(evt, key) {
 
 	if (!document.getElementById("nextButton").disabled) {
 		if (key === "Return" || key === "Enter" || key === "Control" || key === "n" || key === "N") {
-			await globalThis.onNextPage(evt);
+			globalThis.onNextPage(evt);
 			return;
 		}
 		if (!document.querySelector(".page-20").hidden || !document.querySelector(".page-21").hidden || !document.querySelector(".page-22").hidden) {
 			if (key === "1" || key === "2") {
-				await globalThis.onNextPage(evt);
+				globalThis.onNextPage(evt);
 				return;
 			}
 		}
@@ -248,20 +248,20 @@ async function keyUpManager(evt, key) {
 			gamePage(2, evt);
 		}
 	}
-	
+
 	const activePiano = document.querySelector(`section:not([hidden]) piano-player`);
 	if (activePiano) {
 		activePiano.keyNoteUnPressed(evt, key);
 
 		if (!document.querySelector(".page-4").hidden) {
 			if (checkStep4(activePiano, "k")) {
-				await globalThis.onNextPage(evt);
+				globalThis.onNextPage(evt);
 			}
 		}
 
 		if (!document.querySelector(".page-9").hidden) {
 			if (checkStep4(activePiano, "h")) {
-				await globalThis.onNextPage(evt);
+				globalThis.onNextPage(evt);
 			}
 		}
 
@@ -275,12 +275,15 @@ async function keyUpManager(evt, key) {
 					const requiredTrials = (await globalThis.pageConfig.configPromise).practicetrials;
 					const numCorrectSequences = countCorrectSequences(activePiano, requiredTrials);
 					if (numCorrectSequences == requiredTrials) {
-						await globalThis.onNextPage(evt);
+						globalThis.onNextPage(evt);
 					} else {
 						const statusLbl = document.querySelector(".page-6 > .statusLbl");
 						statusLbl.classList.remove("incorrect-msg");
 						statusLbl.classList.add("correct-msg");
-						statusLbl.textContent = `Correct! Now play it again ${requiredTrials - numCorrectSequences} more time${(requiredTrials - numCorrectSequences) == 1 ? '' : 's'}.`;
+						statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more time";
+						if ((requiredTrials - numCorrectSequences) != 1) {
+							statusLbl.textContent = statusLbl.textContent + 's';
+						}
 					}
 					break;
 				}
@@ -304,12 +307,15 @@ async function keyUpManager(evt, key) {
 					const requiredTrials = (await globalThis.pageConfig.configPromise).practicetrials;
 					const numCorrectSequences = countCorrectSequences(activePiano, requiredTrials);
 					if (numCorrectSequences == requiredTrials) {
-						await globalThis.onNextPage(evt);
+						globalThis.onNextPage(evt);
 					} else {
 						const statusLbl = document.querySelector(".page-11 > .statusLbl");
 						statusLbl.classList.remove("incorrect-msg");
 						statusLbl.classList.add("correct-msg");
-						statusLbl.textContent = `Correct! Now play it again ${requiredTrials - numCorrectSequences} more time${(requiredTrials - numCorrectSequences) == 1 ? '' : 's'}.`;
+						statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more time";
+						if ((requiredTrials - numCorrectSequences) != 1) {
+							statusLbl.textContent = statusLbl.textContent + 's';
+						}
 					}
 					break;
 				}
@@ -327,7 +333,7 @@ async function keyUpManager(evt, key) {
 			const seqResult = checkStep19(activePiano);
 			if (seqResult >= 4) {
 				const numCorrectSequences = countCorrectSequences(activePiano, 1);
-				const rolledDie = await checkProbabilityOfWin(activePiano);
+				const rolledDie = checkProbabilityOfWin(activePiano);
 
 				if (rolledDie && numCorrectSequences === 1) {
 					globalThis.pageConfig.setup.score = globalThis.pageConfig.setup.score + 10;
@@ -335,13 +341,13 @@ async function keyUpManager(evt, key) {
 				} else {
 					globalThis.pageConfig.setup.round = 20;
 				}
-				await navigateToPage(evt);
+				navigateToPage(evt);
 			}
 		}
 	}
 }
 
-async function splashWait(timeToWait, hideText) {
+function splashWait(timeToWait, hideText) {
 	const splashElem = document.getElementById("splash");
 	splashElem.hidden = false;
 	const timerElem = splashElem.querySelector("countdown-clock");
@@ -356,71 +362,78 @@ async function splashWait(timeToWait, hideText) {
 	});
 	timerElem.startTimer();
 
-	return await prm;
+	return prm;
 }
 
 function handleRound23() {
+	return new Promise((resolve, reject) => {
+
+		resolve();
+	});
 }
 
 function handleRound24() {
-	document.querySelector(".page-24 .scoreboard").textContent = `Your score: ${globalThis.pageConfig.setup.score} pts`;
+	document.querySelector(".page-24 .scoreboard").textContent = "Your score: " + globalThis.pageConfig.setup.score + " pts";
 }
 
-async function navigateToPage(evt) {
+function navigateToPage(evt) {
 	const round = globalThis.pageConfig.setup.round;
 	const wasMouse = evt && (evt.type.startsWith("mouse") || evt.type.startsWith("click"));
 	eventLog.push({ type: "startNextRound", time: performance.now(), round: round, trial: globalThis.pageConfig.setup.trial, mouse: wasMouse });
 
-	for (let item of document.querySelectorAll("main > section")) {
+	for (let item of document.querySelectorAll(".QuestionBody section[class*='page-'")) {
 		item.hidden = true;
 	}
 
-	await globalThis.pageConfig.save();
+	const prm1 = globalThis.pageConfig.save();
+	prm1.then(() => {
+		document.querySelector(".page-" + parseInt(round)).hidden = false;
 
-	document.querySelector(".page-" + parseInt(round)).hidden = false;
-	
-	if (round === 4) {
-		const activePiano = document.querySelector("section.page-4 piano-player");
-		await activePiano.playNextRound();
-	} else if (round === 6) {
-		document.getElementById("nextButton").disabled = true;
-	} else if (round == 7) {
-		document.getElementById("nextButton").disabled = false;
-	} else if (round === 9) {
-		const activePiano = document.querySelector("section.page-9 piano-player");
-		await activePiano.playNextRound();
-	} else if (round === 11) {
-		document.getElementById("nextButton").disabled = true;
-	} else if (round === 12) {
-		document.getElementById("nextButton").hidden = false;
-		document.getElementById("nextButton").disabled = false;
-	} else if (round === 17) {
-		document.getElementById("nextButton").hidden = true;
-		document.getElementById("nextButton").disabled = true;
-	} else if (round === 18) {
-		document.getElementById("nextButton").hidden = true;
-		document.getElementById("nextButton").disabled = true;
-		await splashWait(0.5, true);
-		await globalThis.onNextPage(evt);
-	} else if (round === 19) {
-		document.querySelector(".page-19 > countdown-clock").startTimer();
-	} else if (round === 20 || round === 21 || round === 22) {
-		document.querySelector(".page-19 > countdown-clock").stopTimer();
-		document.getElementById("nextButton").hidden = false;
-		document.getElementById("nextButton").disabled = false;
-	} else if (round === 23) {
-		document.getElementById("nextButton").hidden = true;
-		document.getElementById("nextButton").disabled = true;
-		const splashWaitPrm = wait(2000);
-		await handleRound23();
-		await splashWaitPrm;
-
-		await globalThis.onNextPage(evt);
-	} else if (round === 24) {
-		document.getElementById("nextButton").hidden = true;
-		document.getElementById("nextButton").disabled = true;
-		handleRound24();
-	}
+		if (round === 4) {
+			const activePiano = document.querySelector("section.page-4 piano-player");
+			activePiano.playNextRound();
+		} else if (round === 6) {
+			document.getElementById("nextButton").disabled = true;
+		} else if (round == 7) {
+			document.getElementById("nextButton").disabled = false;
+		} else if (round === 9) {
+			const activePiano = document.querySelector("section.page-9 piano-player");
+			activePiano.playNextRound();
+		} else if (round === 11) {
+			document.getElementById("nextButton").disabled = true;
+		} else if (round === 12) {
+			document.getElementById("nextButton").hidden = false;
+			document.getElementById("nextButton").disabled = false;
+		} else if (round === 17) {
+			document.getElementById("nextButton").hidden = true;
+			document.getElementById("nextButton").disabled = true;
+		} else if (round === 18) {
+			document.getElementById("nextButton").hidden = true;
+			document.getElementById("nextButton").disabled = true;
+			splashWait(0.5, true).then(() => {
+				globalThis.onNextPage(evt);
+			});
+		} else if (round === 19) {
+			document.querySelector(".page-19 > countdown-clock").startTimer();
+		} else if (round === 20 || round === 21 || round === 22) {
+			document.querySelector(".page-19 > countdown-clock").stopTimer();
+			document.getElementById("nextButton").hidden = false;
+			document.getElementById("nextButton").disabled = false;
+		} else if (round === 23) {
+			document.getElementById("nextButton").hidden = true;
+			document.getElementById("nextButton").disabled = true;
+			const splashWaitPrm = wait(2000);
+			handleRound23().then(() => {
+				splashWaitPrm.then(() => {
+					globalThis.onNextPage(evt);
+				});
+			});
+		} else if (round === 24) {
+			document.getElementById("nextButton").hidden = true;
+			document.getElementById("nextButton").disabled = true;
+			handleRound24();
+		}
+	});
 }
 
 

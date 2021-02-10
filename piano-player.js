@@ -1,6 +1,11 @@
 import {wait, keyDownManager, keyUpManager} from "./script-helpers.js";
 import ConfigManager from "./config-manager.js";
 
+function iosShimHack() {
+	window.AudioContext = window.AudioContext || window.webkitAudioContext;
+	return window.AudioContext;
+}
+
 export default class PianoPlayerElement extends HTMLElement {
 	constructor() {
 		super();
@@ -22,9 +27,20 @@ export default class PianoPlayerElement extends HTMLElement {
 		kbdElem.appendChild(whtNotes);
 		this.shadow.appendChild(kbdElem);
 
-		const linkElem = document.createElement("link");
-		linkElem.rel = "stylesheet";
-		linkElem.href = "piano-player.css";
+		const linkElem = document.createElement("style");
+		linkElem.innerHTML = `
+button:focus { outline: none; }
+
+.keyboard { min-height: 300px; user-select: none; }
+.white-notes .mapped-to { color: #eeeeee; font-size: 0.5rem; }
+.white-notes button { height: 225px; width: 45px; position: absolute; z-index: 1; border: 1px solid #404040; background-color: ivory; display: inline-grid; place-content: end center; }
+.white-notes button:hover { background-color: #ddd5e8; }
+.white-notes button[data-pressed="yes"] { background-color: #ddd5e8; }
+.black-notes button { position: absolute; height: 135px; width: 30px; z-index: 2; background-color: #404040; font-size: 1em; color: #cccccc; display: inline-grid; place-content: end center; padding-bottom: 0.25rem; }
+.black-notes button[data-pressed="yes"] { background-color: #808080; border: 1px solid ivory; }
+.black-notes button:hover { background-color: #808080; border: 1px solid ivory; }
+.black-notes .mapped-to { color: #666666; font-size: 0.5rem; }`;
+
 		this.shadow.appendChild(linkElem);
 	}
 
@@ -32,7 +48,6 @@ export default class PianoPlayerElement extends HTMLElement {
 		this.currentNote = 0;
 
 		const gameConfig = await globalThis.pageConfig.configPromise;
-		
 		this.setup(gameConfig);
 	}
 
@@ -54,16 +69,16 @@ export default class PianoPlayerElement extends HTMLElement {
 			this.pace = newVal;
 		}
 	}
-	
+
 	static get observedAttributes() {
 		return ["volume-control", "notes", "pace"];
 	}
 
-	async playNextRound () {
+	playNextRound () {
 		const nextSequence = [...this.notes.slice(this.currentNote, this.currentNote + 4)];
 		this.currentNote = (this.currentNote + 4) % this.notes.length;
 
-		this.playSequence(nextSequence);
+		return this.playSequence(nextSequence);
 	}
 
 	setup(gameconfig) {
@@ -83,7 +98,7 @@ export default class PianoPlayerElement extends HTMLElement {
 			musicKey.dataset.octave = item.octave;
 			musicKey.dataset.freq = item.freq;
 			musicKey.dataset.key = matchedKey.key;
-			const leftPos = `calc(36% - ${keyboardWidth*1.5}px + ${item.alignment*1.5}px)`;
+			const leftPos = "calc(" + (item.alignment*1.5).toFixed(0) + "px - " + (keyboardWidth*1.5).toFixed(0) + "px)";
 			musicKey.style.left = leftPos;
 			const keyLabel = document.createElement("span");
 			keyLabel.className = "mapped-to";
@@ -103,7 +118,7 @@ export default class PianoPlayerElement extends HTMLElement {
 		}
 	}
 
-	async keyNotePressed(evt, key) {
+	keyNotePressed(evt, key) {
 		const matchedKey = this.keymap.find(x => x.key === key);
 		if (matchedKey) {
 			const octave = (matchedKey.octave !== undefined) ? matchedKey.octave : this.defaultOctave;
@@ -111,7 +126,7 @@ export default class PianoPlayerElement extends HTMLElement {
 			const wasMouse = evt.type.startsWith("mouse") || evt.type.startsWith("click");
 			eventLog.push({ type: "keydown", time: performance.now(), key: key, mouse: wasMouse, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial });
 
-			const matchedElem = this.shadow.querySelector(`.keyboard .key[data-note="${note}"][data-octave="${octave}"]`);
+			const matchedElem = this.shadow.querySelector(".keyboard .key[data-note='" + note + "'][data-octave='" + octave + "']");
 			this.oscList[octave + note] = this.playTone(matchedElem.dataset.freq);
 			matchedElem.dataset.pressed = "yes";
 		}
@@ -123,7 +138,7 @@ export default class PianoPlayerElement extends HTMLElement {
 			const octave = (matchedKey.octave !== undefined) ? matchedKey.octave : this.defaultOctave;
 			const note = matchedKey.note;
 			const wasMouse = evt.type.startsWith("mouse") || evt.type.startsWith("click");
-			const matchedElem = this.shadow.querySelector(`.keyboard .key[data-note="${note}"][data-octave="${octave}"]`);
+			const matchedElem = this.shadow.querySelector(".keyboard .key[data-note='" + note + "'][data-octave='" + octave + "']");
 			if (matchedElem) {
 				const dataset = matchedElem.dataset;
 				matchedElem.dataset.pressed = "";
@@ -133,6 +148,8 @@ export default class PianoPlayerElement extends HTMLElement {
 	}
 
 	hookEvents(keyElement) {
+		keyElement.addEventListener("touchstart", evt => this.notePressed(evt), false)
+		keyElement.addEventListener("touchend", evt => this.noteReleased(evt), false)
 		keyElement.addEventListener("mousedown", evt => this.notePressed(evt), false);
 		keyElement.addEventListener("mouseup", evt => this.noteReleased(evt), false);
 		keyElement.addEventListener("mouseover", evt => this.notePressed(evt), false);
@@ -140,7 +157,7 @@ export default class PianoPlayerElement extends HTMLElement {
 	}
 
 
-	async playSequence(sequence) {
+	playSequence(sequence) {
 		if (sequence.length == 0) {
 			return;
 		}
@@ -150,14 +167,15 @@ export default class PianoPlayerElement extends HTMLElement {
 		const octave = (matchedKey.octave !== undefined) ? matchedKey.octave : this.defaultOctave;
 		const note = matchedKey.note;
 
-		const matchedElem = this.shadow.querySelector(`.keyboard .key[data-note="${note}"][data-octave="${octave}"]`);
+		const matchedElem = this.shadow.querySelector(".keyboard .key[data-note='" + note + "'][data-octave='" + octave + "']");
 		this.oscList[octave + note] = this.playTone(matchedElem.dataset.freq);
 		matchedElem.dataset.pressed = "yes";
 
 		const pace = parseFloat(this.pace) * 1000.0;
-		await wait (pace);
-		matchedElem.dataset.pressed = "";
-		await this.playSequence(sequence);
+		return wait (pace).then(() => {
+			matchedElem.dataset.pressed = "";
+			return this.playSequence(sequence);
+		});
 	}
 
 	get volumeControl() {
@@ -183,7 +201,8 @@ export default class PianoPlayerElement extends HTMLElement {
 
 	get audioContext() {
 		if (!this._audioContext) {
-			this._audioContext = new AudioContext();
+			var audCT = iosShimHack();
+			this._audioContext = new audCT();
 		}
 		return this._audioContext;
 	}
@@ -222,7 +241,8 @@ export default class PianoPlayerElement extends HTMLElement {
 	}
 
 	notePressed(event) {
-		if (event.buttons & 1) {
+
+		if (event.buttons & 1 || event.type.startsWith("touch")) {
 			const dataset = event.currentTarget.dataset;
 			keyDownManager(event, dataset.key);
 		}

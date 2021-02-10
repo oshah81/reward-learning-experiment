@@ -2,276 +2,134 @@
 <html>
 <head>
 	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<title>Player Piano</title>
 	<link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
-	<link rel="preload" href="site.css" as="style" />
-	<link rel="preload" href="source-sans-pro-v14-latin-regular.woff2" as="font" crossorigin="anonymous" />
-	<link rel="preload" href="piano-player.css" as="style" />
-	<link rel="preload" href="script-helpers.js" as="script" crossorigin="anonymous" />
-	<link rel="preload" href="piano-player.js" as="script" crossorigin="anonymous" />
-	<link rel="preload" href="config-manager.js" as="script" crossorigin="anonymous" />
-	
-	<link rel="preload" href="piano.json" as="fetch" crossorigin="anonymous" />
+	<style>
+	.core-experiment .pd_button {
+		border: none;
+		background: none;
+	}
 
-	<link rel="stylesheet" href="site.css" type="text/css" />
-	<script type="module">
-		import ConfigManager from "./config-manager.js";
-		globalThis.pageConfig = new ConfigManager();
-		globalThis.eventLog = globalThis.pageConfig.setup.eventLog;
-	</script>
+	.core-experiment {
+		display: grid;
+		grid-template-areas: "gold-toolbar" "gold-main" "gold-footer";
+		grid-template-rows: 2.25em 1fr 2em;
+		row-gap: 1em;
+		place-items: center;
+		text-align: center;
+	}
+
+	.core-experiment aside { grid-area: gold-toolbar; }
+	.core-experiment .core-container { grid-area: gold-main; }
+	.core-experiment aside.gold-footer { grid-area: gold-footer; }
+
+	.core-experiment .correct-msg {
+		color: #1A5E25;
+	}
+
+	.core-experiment .incorrect-msg {
+		color: #c42207;
+	}
+
+	.core-experiment countdown-clock {
+		position: fixed;
+		right: 1em;
+		top: 1em;
+	}
+
+	.core-experiment .image-position figure {
+		display: inline-block;
+	}
+	</style>
 </head>
 <body>
 	<div class="container">
 		<header>
-			<aside class="settingsBar">
-				<label>Volume:
-					<input type="range" min="0.0" max="1.0" step="0.01" value="0.5" list="volumesDrop" name="volume" />
-				</label>
-			</aside>
 		</header>
-		
-		<main>
-			<section class="page-1">
-				<h1>Parkinsons trial</h1>
-				<p>Press enter to continue</p>
-			</section>
-			<section class="page-2" hidden="hidden">
-				<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
-				<p>Place the index, middle, ring, little fingers of your right hand on keyboard keys g-h-j-k. Warm up by pressing the keys up and down in any order, but not simultaneously. Pay attention to the little finger, it should also comfortably press the corresponding key (k). Make sure you hear the tone of each key, at a comfortable sound level. Adjust the volume if you don’t hear the tones.</p>
-				<p>Now you are going to practice sequence 1, represented by this image:</p>
-				<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-			</section>
-			<section class="page-3" hidden="hidden">
-				<p>Sequence 1 consists of four key presses, in this order:</p>
-				<p>g – j – h – k</p>
-				<p>(that is, index – ring – middle – little finger)</p>
-				<p>Press enter to continue</p>
-				<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-4" hidden="hidden">
-				<piano-player notes="gjhk" pace="0.5" volumecontrol="0.5"></piano-player>
-				<p>Sequence 1 consists of four key presses, in this order:</p>
-				<p>g – j – h – k</p>
-				<p>(that is, index – ring – middle – little finger)</p>
-				<p>Try it out at a comfortable speed, you can practice it slowly now, to make sure the order is clear.</p>
-				<p>Take a little break of 1-2 seconds between each performance of the sequence. You can practice it up to 10 times.</p>
-				<span id="steppedGame">Press F1 to have the computer remind you of the sequence</span>
-				<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-5" hidden="hidden">
-				<p>Was it enough practice? Can you remember the sequence?</p>
-				<p>&nbsp;</p>
-				<p>&nbsp;</p>
-				<p>Press enter to continue</p>
-				<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-6" hidden="hidden">
-				<piano-player notes="gjhk" pace="0.5" volumecontrol="0.5"></piano-player>
-				<p class="statusLbl">Try it out! Play it once at a time and wait for the computer to tell you whether it is correct.</p>
-				<p>Hint: It starts with the right index pressing keyboard letter g.</p>
-				<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-7" hidden="hidden">
-				<p>Now you are going to practice sequence 2, represented by this image:</p>
-				<p>&nbsp;</p>
-				<p>&nbsp;</p>
-				<p>Press enter to continue</p>
-				<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-8" hidden="hidden">
-				<p>Sequence 2 consists of four key presses, in this order:</p>
-				<p>k – g – j – h</p>
-				<p>(that is, little - index – ring – middle finger)</p>
-				<p>Press enter to continue</p>
-				<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-9" hidden="hidden">
-				<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
-				<p>Sequence 2 consists of four key presses, in this order:</p>
-				<p>k – g – j – h</p>
-				<p>(that is, little - index – ring – middle finger)</p>
-				<p>Try it out at a comfortable speed, you can practice it slowly now, to make sure the order is clear.</p>
-				<p>Take a little break of 1-2 seconds between each performance of the sequence. You can practice it up to 10 times.</p>
-				<span id="steppedGame">Press F1 to have the computer remind you of the sequence</span>
-				<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-10" hidden="hidden">
-				<p>Was it enough practice? Can you remember the sequence?</p>
-				<p>&nbsp;</p>
-				<p>&nbsp;</p>
-				<p>Press enter to continue</p>
-				<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-11" hidden="hidden">
-				<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
-				<p class="statusLbl">Try it out! Play it once at a time and wait for the computer to tell you whether it is correct.</p>
-				<p>Hint: It starts with the right index pressing keyboard letter g.</p>
-				<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-12" hidden="hidden">
-				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-				<div class="image-position">
-					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
+		<main id="Questions">
+			<div class="QuestionOuter">
+				<div class="QuestionBody">
 				</div>
-			</section>
-
-			<section class="page-13" hidden="hidden">
-				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-				<div class="image-position">
-					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
+			</div>
+			<div class="Separator"></div>
+			<div class="QuestionOuter">
+				<div class="QuestionBody">
+					<textarea>Save goes here</textarea>
 				</div>
-				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-			</section>
-
-			<section class="page-14" hidden="hidden">
-				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-				<div class="image-position">
-					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
+			</div>
+			<div class="Separator"></div>
+			<div class="QuestionOuter">
+				<div class="QuestionBody">
+					<textarea>CSV goes here</textarea>
 				</div>
-				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-				<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-				obtain a reward (5 points) or not.</p>
-			</section>
-
-			<section class="page-15" hidden="hidden">
-				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-				<div class="image-position">
-					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
-				</div>
-				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-				<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-				obtain a reward (5 points) or not.</p>
-				<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
-				likely give you reward!</p>
-			</section>
-
-			<section class="page-16" hidden="hidden">
-				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-				<div class="image-position">
-					<img src="fractal1.png" alt="Pink button" style="width: 200px; height: 200px;" />
-					<img src="fractal2.png" alt="Yellow button" style="width: 200px; height: 200px;" />
-				</div>
-				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-				<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-				obtain a reward (5 points) or not.</p>
-				<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
-				likely give you reward!</p>
-				<p>Careful though: The reward (points) associated with each sequence will change from time to time. So pay attention
-				and adapt your decisions if you think that the conditions changed.</p>
-			</section>
-
-			<section class="page-17" hidden="hidden">
-				<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-				<div class="image-position">
-					<img src="fractal1.png" class="clickable" alt="Pink button" style="width: 200px; height: 200px;" data-page="1" />
-					<img src="fractal2.png" class="clickable" alt="Yellow button" style="width: 200px; height: 200px;" data-page="2" />
-				</div>
-				<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-				<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-				obtain a reward (5 points) or not.</p>
-				<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
-				likely give you reward!</p>
-				<p>Careful though: The reward (points) associated with each sequence will change from time to time. So pay attention
-				and adapt your decisions if you think that the conditions changed.</p>
-				<p>Press 1 (or click the purple icon) to choose sequence 1.<p>
-				<p>Press 2 (or click the yellow icon) to choose sequence 2.</p>
-			</section>
-
-			<section class="page-18" hidden="hidden">
-			</section>
-
-			<section class="page-19" hidden="hidden">
-				<piano-player notes="kgjh" pace="1.0" volumecontrol="0.5"></piano-player>
-				<countdown-clock width="100" time="5.0"></countdown-clock>
-				<p class="statusLbl">Play sequence.</p>
-				<img src="fractal2.png" class="active-icon" alt="Yellow button" style="width: 200px; height: 200px;" />
-			</section>
-
-			<section class="page-20" hidden="hidden">
-				<h2 class="statusLbl incorrect-msg">Something went wrong.<br/>You earned 0 points.</h2>
-			</section>
-
-			<section class="page-21" hidden="hidden">
-				<h2 class="statusLbl correct-msg">Correct!<br/>You get 10 points.</h2>
-			</section>
-
-			<section class="page-22" hidden="hidden">
-				<h2 class="statusLbl incorrect-msg">You ran out of time to play the sequence, and lost the points.</h2>
-			</section>
-
-			<section class="page-23" hidden="hidden">
-				<h2>+</h2>
-			</section>
-
-			<section class="page-24" hidden="hidden">
-				<p class="scoreboard">Your score: </p>
-				<div class="image-position">
-					<img src="fractal1.png" class="clickable" alt="Pink button" style="width: 200px; height: 200px;" data-page="1" />
-					<img src="fractal2.png" class="clickable" alt="Yellow button" style="width: 200px; height: 200px;" data-page="2" />
-				</div>
-				<p>In this round, you need to pick the correct icon and play the sequence. Be careful though! only one of the sequences will give you the maximum number of points.</p>
-				<p>Press 1 (or click the purple icon) to choose sequence 1.<p>
-				<p>Press 2 (or click the yellow icon) to choose sequence 2.</p>
-			</section>
+			</div>
+			<input type="button" id="NextButton" value="&gt;" onclick="window.finishPage(event)" />
 		</main>
-		<footer>
-			<button id="nextButton" onclick="globalThis.onNextPage(event)">Next &gt;</button>
-		</footer>
+		
 	</div>
-	<datalist id="volumesDrop">
-		<option value="0.0" label="Mute">
-		<option value="1.0" label="100%">
-	</datalist>
-	<div id="splash" hidden="hidden"><countdown-clock width="500" time="0.5"></countdown-clock></div>
 
-	<script type="module">
-		import { setupVolumeControl, setupIcons, keyUpManager, keyDownManager, navigateToPage } from "./script-helpers.js";
-
-		setupVolumeControl();
-		setupIcons();
-		document.addEventListener("keydown", async evt => await keyDownManager(evt, evt.key));
-		document.addEventListener("keyup", async evt => await keyUpManager(evt, evt.key));
-
-		globalThis.onNextPage = async event => {
-			let round = globalThis.pageConfig.setup.round;
-			if (round === 24) {
-				round = 18;
-			} else if (round === 20 || round === 21 || round === 22) {
-				round = 23;
-			} else {
-				round++;
+	<script>
+	window.Qualtrics = {
+		"SurveyEngine": {
+			"addOnload": function (cb) {
+				this.loadList.push(cb);
+			},
+			"addOnReady": function (cb) {
+				this.readyList.push(cb);
+			},
+			"addOnUnload": function (cb) {
+				this.unloadList.push(cb);
+			},
+			"loadList": [],
+			"unloadList": [],
+			"readyList": [],
+			"setEmbeddedData": function (cb, val) {
+				console.log(cb);
 			}
-			globalThis.pageConfig.setup.round = round;
-			await navigateToPage(event);
+		}
+	};
+
+	window.addEventListener("load", function (evt) {
+		for (let item of Qualtrics.SurveyEngine.readyList) {
+			item();
+		}
+	});
+
+	document.addEventListener("unload", function (evt) {
+		for (let item of Qualtrics.SurveyEngine.unloadList) {
+			item();
+		}
+	});
+
+	</script>
+	<script src="qualtrics.js" type="text/javascript">
+	</script>
+	<script>
+		for (let item of Qualtrics.SurveyEngine.loadList) {
+			item();
+		}
+	</script>
+	<script>
+		window.finishPage = evt => {
+			alert("Page has finished. On Qualtrics - we will submit the page and go to the next section.");
 		};
-
 	</script>
 	<script type="module">
-		import PianoPlayerElement from "./piano-player.js";
-		import CountDownClockElement from "./countdown-clock.js";
+		async function doInit() {
+			(await globalThis.pageConfig.configPromise).practicetrials = 1;
+		}
 
-		customElements.define("piano-player", PianoPlayerElement);
-		customElements.define("countdown-clock", CountDownClockElement);
-	</script>
-	<script type="module">
-		import { navigateToPage, timeoutManager } from "./script-helpers.js";
+		window.addEventListener("load", e => {
+			setTimeout(async () => {
+				/*
+				document.querySelectorAll(".core-container section").forEach(x => x.hidden = true);
+				document.querySelector(".core-container .page-24").hidden = false;
+				*/
+				await doInit();
+			}, 500);
+		});
 
-		document.querySelector(".page-19 > countdown-clock").addEventListener("timeout", async evt => await timeoutManager(evt));
-		navigateToPage();
 	</script>
 </body>
 </html>
