@@ -1287,12 +1287,10 @@ button:focus { outline: none; }
 
 	playTone(freq) {
 		if (this._audioContextRefCount === 0) {
-			console.log("creating context");
 			this._audioContextRefCount = 1;
 			const audCT = iosShimHack();
 			this._audioContext = new audCT();
 		} else {
-			console.log("reusing context");
 			this._audioContextRefCount ++;
 		}
 
@@ -1315,18 +1313,15 @@ button:focus { outline: none; }
 
 		setTimeout(() => {
 			const timeout = (envelope.gain.value == this.volumeControl) ? 250 : 2000;
-			console.log(`chosen timeout ${timeout}`);
+
 			setTimeout(() => {
 				osc.stop(ctt.currentTime);
 				osc.disconnect(envelope);
 				envelope.disconnect(ctt);
 
 				if (--this._audioContextRefCount === 0) {
-					console.log("Closing Context");
 					this._audioContext.close();
 					this._audioContext = null;
-				} else {
-					console.log(`Leaving context open because ${this.audioContextRefCount} instance(s) still using it`);
 				}
 			}, timeout);
 		}, 10);
