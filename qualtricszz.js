@@ -340,13 +340,10 @@ function setupIcons() {
 }
 
 function checkProbabilityOfWin(activePiano) {
-	const activeProbability = (activePiano.dataset.sequence == 1) ? globalThis.pageConfig.probJson.probability1[globalThis.pageConfig.setup.trial] : globalThis.pageConfig.probJson.probability2[globalThis.pageConfig.setup.trial];
-	const unchosenProbability = (activePiano.dataset.sequence == 1) ? globalThis.pageConfig.probJson.probability2[globalThis.pageConfig.setup.trial] : globalThis.pageConfig.probJson.probability1[globalThis.pageConfig.setup.trial];
+	const activeProbability = globalThis.pageConfig.probJson.probability1[globalThis.pageConfig.setup.trial];
+	const unchosenProbability = globalThis.pageConfig.probJson.probability2[globalThis.pageConfig.setup.trial];
 
-	let randArray = new Uint16Array(1);
-	crypto.getRandomValues(randArray);
-
-	const mcsScore = randArray[0]/65536.0;
+	const mcsScore = Math.random();
 
 	return { "mcsScore": mcsScore, "activeProbability": activeProbability, "unchosenProbability": unchosenProbability };
 }
@@ -523,6 +520,11 @@ function keyDownManager(evt, key) {
 		pressedKeys.add(key);
 	}
 
+	if (key === " ") {
+		evt.preventDefault();
+		evt.stopPropagation();
+	}
+
 	const prm = new Promise(resolve => {
 		if (!document.querySelector(".page-18").hidden || !document.querySelector(".page-24").hidden) {
 			if (key === "g") {
@@ -668,8 +670,16 @@ function keyUpManager(evt, key) {
 			if (seqResult >= 4) {
 				const numCorrectSequences = countCorrectSequences(activePiano, 1);
 				const rolledDie = checkProbabilityOfWin(activePiano);
+				let roundResult = "unknown";
 
-				const roundResult = (numCorrectSequences !== 1) ? "incorrectPlay" : ((rolledDie.mcsScore <= rolledDie.activeProbability) ? "winRound" : "lostRound");
+				if (numCorrectSequences !== 1) {
+					roundResult = "incorrectPlay";
+				} else if (activePiano.dataset.sequence == 1) {
+					roundResult = rolledDie.mcsScore <= rolledDie.activeProbability ? "winRound" : "lostRound";
+				} else {
+					roundResult = rolledDie.mcsScore > rolledDie.activeProbability ? "winRound" : "lostRound";
+				}
+
 				eventLog.push({
 					type: roundResult,
 					time: performance.now(),
@@ -744,12 +754,11 @@ function handleRound24() {
 				"Round " + trial + " of " + config.totaltrials + ".";
 			if (trial > config.totaltrials) {
 				/* The next button will be disabled for the duration of this experiment. */
-				document.querySelector("#NextButton").hidden = false;
-				document.querySelector("#NextButton").click();
-
-				for (let item of document.querySelectorAll(".QuestionBody section[class*='page-'")) {
-					item.hidden = true;
-				}
+				codaGame().then(() => {
+					resolve();
+				});
+			} else {
+				resolve();
 			}
 		});
 	});
@@ -761,7 +770,7 @@ function navigateToPage(evt) {
 	const wasMouse = evt && (evt.type.startsWith("mouse") || evt.type.startsWith("click") || evt.type.startsWith("touch"));
 	eventLog.push({ type: "startNextRound", time: performance.now(), round: round, trial: globalThis.pageConfig.setup.trial, mouse: wasMouse });
 
-	for (let item of document.querySelectorAll(".QuestionBody section[class*='page-'")) {
+	for (let item of document.querySelectorAll(".core-experiment section[class*='page-'")) {
 		item.hidden = true;
 	}
 
@@ -771,12 +780,8 @@ function navigateToPage(evt) {
 		document.querySelector(".page-" + parseInt(round)).hidden = false;
 
 		if (round === 1) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(1000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
 		} else if (round === 2) {
 			document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
 			document.getElementById("nxtbtn").hidden = true;
@@ -1281,10 +1286,10 @@ button:focus { outline: none; }
 	}
 
 	playTone(freq) {
-		if (!this._audioContext) {
+		if (this._audioContextRefCount === 0) {
+			this._audioContextRefCount = 1;
 			const audCT = iosShimHack();
 			this._audioContext = new audCT();
-			this._audioContextRefCount = 1;
 		} else {
 			this._audioContextRefCount ++;
 		}
@@ -1299,13 +1304,14 @@ button:focus { outline: none; }
 		osc.type = "triangle";
 		envelope.gain.value = this.volumeControl;
 
+		const retVal = envelope.gain.exponentialRampToValueAtTime(0.001, ctt.currentTime + decayRate);
+
 		osc.connect(envelope);
 		envelope.connect(ctt.destination);
 
 		osc.start(ctt.currentTime);
 
-		envelope.gain.exponentialRampToValueAtTime(0.001, ctt.currentTime + decayRate);
-
+		console.log(retVal);
 		setTimeout(() => {
 			const timeout = (envelope.gain.value == this.volumeControl) ? 250 : 2000;
 			setTimeout(() => {
@@ -1376,6 +1382,20 @@ button:focus { outline: none; }
 	}
 }
 
+function codaGame() {
+	return new Promise((resolve) => {
+		for (let item of document.querySelectorAll(".core-experiment section[class*='page-'")) {
+			item.hidden = true;
+		}
+
+		globalThis.pageConfig.fullSave();
+		document.querySelector("#NextButton").hidden = false;
+		document.querySelector("#NextButton").click();
+		resolve();
+	});
+}
+
+
 	function buildHtml() {
 		return `
 		<div class="core-experiment">
@@ -1391,7 +1411,7 @@ button:focus { outline: none; }
 				<section class="page-2" hidden="hidden">
 					<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
 					<p>Place the index, middle, ring, little fingers of your right hand on keyboard keys g-h-j-k. Warm up by pressing the keys up and down in any order, but not simultaneously. Pay attention to the little finger, it should also comfortably press the corresponding key (k). Make sure you hear the tone of each key, at a comfortable sound level. Adjust the volume if you don’t hear the tones.</p>
-					<iframe width="640" height="384" src="https://www.youtube.com/embed/kIyEu2Sb8_A?playlist=kIyEu2Sb8_A&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allow="loop" allowfullscreen></iframe>
+					<iframe width="640" height="384" src="https://www.youtube.com/embed/kIyEu2Sb8_A?playlist=kIyEu2Sb8_A&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allowfullscreen></iframe>
 				</section>
 				<section class="page-3" hidden="hidden">
 					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px; float: right; padding-bottom: 1em;" />
@@ -1399,7 +1419,7 @@ button:focus { outline: none; }
 					<p>Sequence 1 consists of four key presses, in this order:</p>
 					<h2 class="sequence-display">g – j – h – k</h2>
 					<p>(that is, index – ring – middle – little finger)</p>
-					<p><iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allow="loop" allowfullscreen></iframe></p>
+					<p><iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allowfullscreen></iframe></p>
 				</section>
 
 				<section class="page-4" hidden="hidden">
@@ -1412,7 +1432,7 @@ button:focus { outline: none; }
 					<p>Take a little break of 1-2 seconds between each performance of the sequence. You can practice it up to 10 times.</p>
 					<span id="steppedGame">Press the 'q' key to have the computer remind you of the sequence</span>
 					<p>
-					<iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allow="loop" allowfullscreen></iframe>
+					<iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allowfullscreen></iframe>
 					</p>
 				</section>
 

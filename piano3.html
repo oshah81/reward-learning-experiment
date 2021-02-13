@@ -112,12 +112,13 @@
 	</script>
 	<script>
 		window.finishPage = evt => {
-			location.href = "piano2.html";
+			alert("Page has finished. On Qualtrics - we will submit the page and go to the next section.");
 		};
 	</script>
 	<script type="module">
 		async function doInit() {
 			(await globalThis.pageConfig.configPromise).practicetrials = 1;
+			(await globalThis.pageConfig.configPromise).totaltrials = 5;
 		}
 
 		window.addEventListener("load", e => {

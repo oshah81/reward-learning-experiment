@@ -57,8 +57,6 @@ const pianoJson = {
 	"totaltrials": 180,
 	"defaultOctave": 1,
 	"keymap": [
-		// {"key": "a", "note": "A", "octave": 0 },
-		// {"key": "s", "note": "B", "octave": 0 },
 		{"key": "d", "note": "C", "octave": 1 },
 		{"key": "f", "note": "D" },
 		{"key": "g", "note": "E" },
@@ -72,7 +70,6 @@ const pianoJson = {
 		{"key": "u", "note": "F#" },
 		{"key": "i", "note": "G#" },
 		{"key": "o", "note": "A#" }
-		// {"key": "w", "note": "A#", "octave": 0 }
 	]
 };
 
@@ -133,8 +130,6 @@ class ConfigManager {
 			headers.append("Content-Type", "application/x-www-form-urlencoded");
 			const body = this.setup.id ? "id=" + this.setup.id : "";
 
-			const probGen = new ProbabilityGenerator();
-			this.probJson = probGen.GenerateProbabilities(this._config.totaltrials);
 			this.flush();
 
 			resolve(this._config);
@@ -164,147 +159,6 @@ class ConfigManager {
 	}
 }
 
-class ProbabilityGenerator {
-	shuffle(a) {
-		const randArray = new Uint16Array(a.length);
-		crypto.getRandomValues(randArray);
-
-		for (let i = a.length - 1; i > 0; i--) {
-			const j = Math.floor(randArray[i] * (i + 1) / 65536.0);
-			[a[i], a[j]] = [a[j], a[i]];
-		}
-		return a;
-	}
-
-	GenerateProbabilities(trials) {
-		const probabilities = new Array(trials);
-
-		const contingencies = this.shuffle([0.5,0.7,0.9,0.3,0.1]);
-		const blockLengths = this.shuffle([4, 6, 0, -4, -6]).map((x,i,a) => Math.floor(trials / a.length + x));
-
-		let i = 0, j = 0;
-		for (const item of blockLengths) {
-			const probability = contingencies[i++];
-			probabilities.fill(probability, j, j+item);
-			j += item;
-		}
-
-		return { probability1: probabilities, probability2: probabilities.map(x => 1 - x) };
-	}
-
-}
-
-class ProbabilityGeneratorzz {
-
-	RandN(trials, candidates) {
-		// Uses the Marsaglia algorithm for compatibility with matlab.
-		let randArray = new Uint16Array(trials * candidates);
-		crypto.getRandomValues(randArray);
-		const randVector = new Array(trials * candidates);
-
-		let i = 0, j = 0;
-		do {
-			let y2;
-			let use_last = false;
-			let y1;
-			if (use_last) {
-				y1 = y2;
-				use_last = false;
-			}
-			else {
-				let x1, x2, w;
-				do {
-					if (i >= randArray.length - 1) {
-						crypto.getRandomValues(randArray);
-						i = 0;
-					}
-					x1 = 2.0 * randArray[i] / 65536.0 - 1.0;
-					x2 = 2.0 * randArray[i + 1] / 65536.0 - 1.0;
-					w  = x1 * x1 + x2 * x2;
-					i++;
-				} while (w >= 1.0);
-				w = Math.sqrt( (-2.0 * Math.log(w)) / w );
-				y1 = x1 * w;
-				y2 = x2 * w;
-				use_last = true;
-			}
-			randVector[j++] = y2;
-		} while (j < trials * candidates);
-
-		const resArray = new Array(candidates);
-		for (let k = 0; k < candidates; k++) {
-			resArray[k] = randVector.slice(k*trials, k*trials+trials);
-		}
-		return resArray;
-	}
-
-	CumSum(x) {
-		const arr = new Array(x.length);
-		for (let k = 0; k < x.length; k++) {
-			const col = new Array(x[k].length);
-			let sum = x[k][0];
-			col[0] = sum;
-			let i = 1;
-			while (i < x[k].length) {
-				sum += x[k][i];
-				col[i] = sum;
-				i++;
-			}
-			arr[k] = this.Rerange(col);
-		}
-		return arr;
-	}
-
-	Rerange(input) {
-		const min = Math.min(...input);
-		const max = Math.max(...input);
-		return input.map(x => (x - min) / (max - min));
-	}
-
-	TotalDistance(arr1, arr2) {
-		let sum = 0;
-		for (let i = 0; i < arr1.length; i++) {
-			const diff = arr2[i] - arr1[i];
-			sum += Math.abs(diff);
-		}
-		return sum;
-	}
-
-	GenerateProbabilities(trials, maxAttempts = 10) {
-		do {
-			const x = this.RandN(trials, 70);
-			const y = this.CumSum(x);
-
-			const my = y.map((q, i) => q.reduce((a, b) => a + b, 0) / q.length);
-			let minDistance = null;
-			for (let i = 0; i < my.length; i++) {
-				for (let j = 0; j < my.length; j++) {
-					if (i == j) {
-						continue;
-					}
-
-					const distance = my[i] - my[j];
-
-					if (my[i] < 0.5) {
-						continue;
-					}
-
-					if (this.TotalDistance(y[i], y[j]) < trials / 3.5) {
-						continue;
-					}
-
-					if (!minDistance || Math.abs(distance) < Math.abs(minDistance.distance)) {
-						minDistance = { "i": i, "j": j, "distance": distance };
-					}
-				}
-			}
-
-			if (minDistance) {
-				return { probability1: y[minDistance.i], probability2: y[minDistance.j] };
-			}
-		} while (maxAttempts-- > 0);
-	}
-}
 
 
 function wait(ms) {
@@ -329,26 +183,6 @@ function setupVolumeControl() {
 			elem.volumeControl = volControl.value;
 		}
 	});
-}
-
-function setupIcons() {
-	for (let elem of document.querySelectorAll("img.clickable")) {
-		elem.addEventListener("click", function(evt) {
-			gamePage(parseInt(evt.target.dataset.page), evt);
-		});
-	}
-}
-
-function checkProbabilityOfWin(activePiano) {
-	const activeProbability = (activePiano.dataset.sequence == 1) ? globalThis.pageConfig.probJson.probability1[globalThis.pageConfig.setup.trial] : globalThis.pageConfig.probJson.probability2[globalThis.pageConfig.setup.trial];
-	const unchosenProbability = (activePiano.dataset.sequence == 1) ? globalThis.pageConfig.probJson.probability2[globalThis.pageConfig.setup.trial] : globalThis.pageConfig.probJson.probability1[globalThis.pageConfig.setup.trial];
-
-	let randArray = new Uint16Array(1);
-	crypto.getRandomValues(randArray);
-
-	const mcsScore = randArray[0]/65536.0;
-
-	return { "mcsScore": mcsScore, "activeProbability": activeProbability, "unchosenProbability": unchosenProbability };
 }
 
 function checkStep4(piano, keyToCheck) {
@@ -453,25 +287,6 @@ function checkStep19(piano) {
 	return notesPlayed;
 }
 
-function timeoutManager(evt) {
-	const activePiano = document.querySelector(`section:not([hidden]) piano-player`);
-	const rolledDie = checkProbabilityOfWin(activePiano);
-	eventLog.push({
-		type: "timedOut",
-		time: performance.now(),
-		round: globalThis.pageConfig.setup.round,
-		trial: globalThis.pageConfig.setup.trial,
-		sequence: activePiano.notes,
-		mouse: false,
-		activeProbability: rolledDie.activeProbability,
-		unchosenProbability: rolledDie.unchosenProbability,
-		mcsScore: rolledDie.mcsScore
-	});
-	globalThis.pageConfig.setup.round = 22;
-
-	return navigateToPage(evt);
-}
-
 function countCorrectSequences(piano, requiredTrials) {
 	const roundStart = findLastIndex(eventLog, x => x.type === "startNextRound");
 
@@ -492,26 +307,6 @@ function countCorrectSequences(piano, requiredTrials) {
 	return trials;
 }
 
-function gamePage(icon, evt, key) {
-	globalThis.pageConfig.setup.round = 19;
-	globalThis.pageConfig.setup.trial++;
-	document.querySelector(".page-19 > piano-player").dataset.sequence = icon;
-
-	const activePiano = document.querySelector(".page-19 > piano-player");
-	if (icon === 1) {
-		activePiano.notes = "gjhk";
-		document.querySelector(".page-19 > .active-icon").src = "https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021";
-		document.querySelector(".page-19 > .statusLbl").textContent = "Play Sequence 1";
-	} else {
-		activePiano.notes = "kgjh";
-		document.querySelector(".page-19 > .active-icon").src = "https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058";
-		document.querySelector(".page-19 > .statusLbl").textContent = "Play Sequence 2";
-	}
-
-	res = navigateToPage(evt);
-	return res;
-}
-
 function keyDownManager(evt, key) {
 	if (typeof evt.repeat !== "undefined" && evt.repeat) {
 		return;
@@ -523,28 +318,10 @@ function keyDownManager(evt, key) {
 		pressedKeys.add(key);
 	}
 
-	const prm = new Promise(resolve => {
-		if (!document.querySelector(".page-18").hidden || !document.querySelector(".page-24").hidden) {
-			if (key === "g") {
-				gamePage(1, evt, key).then(() => {
-					resolve();
-				});
-			} else if (key === "k") {
-				gamePage(2, evt, key).then(() => {
-					resolve();
-				});
-			} else {
-				resolve();
-			}
-		} else {
-			resolve();
-		}
-	}).then(() => {
-		const activePiano = document.querySelector(`section:not([hidden]) piano-player`);
-		if (activePiano) {
-			activePiano.keyNotePressed(evt, key);
-		}
-	});
+	const activePiano = document.querySelector(`section:not([hidden]) piano-player`);
+	if (activePiano) {
+		activePiano.keyNotePressed(evt, key);
+	}
 }
 
 
@@ -663,47 +440,6 @@ function keyUpManager(evt, key) {
 			}
 		}
 
-		if (!document.querySelector(".page-19").hidden) {
-			const seqResult = checkStep19(activePiano);
-			if (seqResult >= 4) {
-				const numCorrectSequences = countCorrectSequences(activePiano, 1);
-				const rolledDie = checkProbabilityOfWin(activePiano);
-
-				const roundResult = (numCorrectSequences !== 1) ? "incorrectPlay" : ((rolledDie.mcsScore <= rolledDie.activeProbability) ? "winRound" : "lostRound");
-				eventLog.push({
-					type: roundResult,
-					time: performance.now(),
-					round: globalThis.pageConfig.setup.round,
-					trial: globalThis.pageConfig.setup.trial,
-					mouse: wasMouse,
-					activeProbability: rolledDie.activeProbability,
-					unchosenProbability: rolledDie.unchosenProbability,
-					mcsScore: rolledDie.mcsScore
-				});
-				if (roundResult === "winRound") {
-					globalThis.pageConfig.setup.score = globalThis.pageConfig.setup.score + 10;
-					globalThis.pageConfig.setup.hintCount = 0;
-					globalThis.pageConfig.setup.round = 21;
-					for (const hints of document.querySelectorAll(".hint-text")) {
-						hints.textContent = "";
-						hints.hidden = true;
-					}
-				} else {
-					globalThis.pageConfig.setup.hintCount++;
-					for (const hints of document.querySelectorAll(".hint-text")) {
-						hints.hidden = (globalThis.pageConfig.setup.hintCount < 5);
-						if (roundResult === "lostRound") {
-							hints.innerHTML = "";
-						}
-						else {
-							hints.innerHTML = "Hint: <strong>wrong notes</strong> played.<br/><i>Press 'q' to be reminded of the sequence</i>";
-						}
-					}
-					globalThis.pageConfig.setup.round = 20;
-				}
-				navigateToPage(evt);
-			}
-		}
 		return;
 	}
 
@@ -728,31 +464,6 @@ function splashWait(timeToWait, hideText) {
 	timerElem.startTimer();
 
 	return prm;
-}
-
-function handleRound23() {
-	return new Promise(resolve => {
-		resolve();
-	});
-}
-
-function handleRound24() {
-	return new Promise(resolve => {
-		const trial = globalThis.pageConfig.setup.trial;
-		globalThis.pageConfig.configPromise.then(config => {
-			document.querySelector(".page-24 .scoreboard").textContent =
-				"Round " + trial + " of " + config.totaltrials + ".";
-			if (trial > config.totaltrials) {
-				/* The next button will be disabled for the duration of this experiment. */
-				document.querySelector("#NextButton").hidden = false;
-				document.querySelector("#NextButton").click();
-
-				for (let item of document.querySelectorAll(".QuestionBody section[class*='page-'")) {
-					item.hidden = true;
-				}
-			}
-		});
-	});
 }
 
 function navigateToPage(evt) {
@@ -829,35 +540,7 @@ function navigateToPage(evt) {
 			document.getElementById("nxtbtn").hidden = true;
 			document.getElementById("nxtbtn").disabled = true;
 		} else if (round === 12) {
-			wait(2000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 13) {
-			document.getElementById("nxtbtn").textContent = "Continue >";
-		} else if (round === 18) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			globalThis.pageConfig.setup.trial = 1;
-		} else if (round === 19) {
-			document.querySelector(".page-19 > countdown-clock").startTimer();
-		} else if (round === 20 || round === 21 || round === 22) {
-			document.querySelector(".page-19 > countdown-clock").stopTimer();
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			const splashWaitPrm = wait(roundWaitTime);
-			handleRound23().then(x => {
-				splashWaitPrm.then(() => {
-					globalThis.onNextPage(evt);
-				});
-			});
-		} else if (round === 23) {
-			globalThis.onNextPage(evt);
-		} else if (round === 24) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			document.querySelector(".page-19 piano-player").clearKeyStates();
-			handleRound24();
+			codaGame();
 		}
 	});
 
@@ -867,202 +550,9 @@ function navigateToPage(evt) {
 
 function onNextPage(event) {
 	let round = globalThis.pageConfig.setup.round;
-	if (round === 24) {
-		round = 18;
-	} else if (round === 20 || round === 21 || round === 22) {
-		round = 23;
-	} else {
-		round++;
-	}
+	round++;
 	globalThis.pageConfig.setup.round = round;
 	navigateToPage(event);
-}
-
-
-
-class CountDownClockElement extends HTMLElement {
-	constructor() {
-		super();
-		this.shadow = this.attachShadow({ mode: "closed" });
-
-		this.stopTimer();
-	}
-
-	static get observedAttributes() {
-		return ["width", "hidetext", "time", "autostart"];
-	}
-
-	attributeChangedCallback(name, oldVal, newVal) {
-		if (oldVal === newVal) {
-			return;
-		}
-		if (name === "width") {
-			this.width = newVal;
-		}
-		if (name === "hidetext") {
-			this.hideText = newVal;
-		}
-		if (name === "time") {
-			this.time = parseFloat(newVal);
-		}
-		if (name === "autostart") {
-			this.autostart = newVal;
-		}
-	}
-
-	connectedCallback() {
-		this.paused = false;
-		this.timeLeft = this.time * 1000;
-
-        const canvas = document.createElement("canvas");
-        canvas.width = canvas.height = this.width;
-        this.context = canvas.getContext("2d");
-        this.shadow.appendChild(canvas);
-
-		if (this.autostart) {
-			this.startTimer();
-		}
-	}
-
-	disconnectedCallback() {
-		this.stopTimer();
-	}
-
-	formatTimeLeft(timeLeft) {
-		let seconds = Math.ceil(this.timeLeft / 1000.0);
-		return seconds;
-	}
-
-	pause() {
-		this.paused = true;
-	}
-
-	resume() {
-		this.paused = false;
-	}
-
-	startTimer() {
-		this.paused = false;
-		this.start = null;
-		this.timeLeft = this.time * 1000;
-		this.shadow.querySelector("canvas").hidden = false;
-
-		this.started = true;
-		this.frameAdvance = (timestamp) => {
-			if (!this.started) {
-				return false;
-			}
-			if (this.start === null) {
-				this.start = timestamp;
-			}
-			const elapsed = timestamp - this.start;
-			this.start = timestamp;
-
-			if (this.paused) {
-				requestAnimationFrame(this.frameAdvance);
-				return;
-			}
-			this.timeLeft -= elapsed;
-
-			this.updateClock();
-
-			if (this.timeLeft < 1) {
-				this.triggerTimeOut();
-				this.start = null;
-			} else {
-				requestAnimationFrame(this.frameAdvance);
-			}
-		};
-		requestAnimationFrame(this.frameAdvance);
-	}
-
-	stopTimer() {
-		this.start = null;
-		this.timeLeft = this.time;
-		this.started = false;
-		this.frameAdvance = null;
-	}
-
-	updateClock() {
-		const timeFraction = this.timeLeft / this.time / 1000.0;
-        const radius = this.width/2;
-        this.context.clearRect(0, 0, this.width, this.width);
-        this.context.beginPath();
-        this.context.moveTo(radius, radius);
-		const currentTime = timeFraction;
-
-        const gradient = this.context.createRadialGradient(radius, radius, 3, radius, radius, radius);
-        gradient.addColorStop(0, "#ffffff");
-
-        gradient.addColorStop(1, "hsl(" + Math.round(currentTime*120) + ", 100%, 50%)");
-
-        this.context.fillStyle = gradient;
-        this.context.arc(radius, radius, radius, -Math.PI / 2, -Math.PI / 2 + 2 * Math.PI * currentTime, false);
-        this.context.fill();
-
-		if (!this.hideText) {
-			const timeLeftText = this.formatTimeLeft(this.timeLeft);
-			const dims = this.context.measureText(timeLeftText);
-			this.context.beginPath();
-			this.context.font = "24px sans-serif";
-			this.context.fillStyle = "black";
-			this.context.moveTo(0,0);
-			this.context.textAlign = "center";
-			this.context.fillText(timeLeftText, radius, radius+dims.actualBoundingBoxAscent/2, 150, 150);
-			this.context.fill();
-		}
-	}
-
-	triggerTimeOut() {
-		if (this.started) {
-			const detail = {
-
-			};
-			this.shadow.querySelector("canvas").hidden = true;
-			this.dispatchEvent(new CustomEvent("timeout", { bubbles: true, detail: detail }));
-		}
-	}
-
-	get width() {
-		if(!this.hasAttribute("width")) {
-			return 50;
-		} else {
-			return this.getAttribute("width");
-		}
-	}
-	set width(value) {
-		this.setAttribute("width", value);
-	}
-
-	get hideText() {
-		return this.hasAttribute("hidetext");
-	}
-	set hideText(value) {
-		if (value) {
-			this.setAttribute("hidetext", value);
-		} else {
-			this.removeAttribute("hidetext");
-		}
-	}
-
-	get autostart() {
-		return this.hasAttribute("autostart");
-	}
-	set autostart(value) {
-		if (value) {
-			this.setAttribute("autostart", value);
-		} else {
-			this.removeAttribute("autostart");
-		}
-	}
-
-	get time() {
-		return parseFloat(this.getAttribute("time"));
-	}
-	set time(value) {
-		const attrib = value.toFixed(2);
-		this.setAttribute("time", value);
-	}
 }
 
 
@@ -1391,7 +881,7 @@ button:focus { outline: none; }
 				<section class="page-2" hidden="hidden">
 					<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
 					<p>Place the index, middle, ring, little fingers of your right hand on keyboard keys g-h-j-k. Warm up by pressing the keys up and down in any order, but not simultaneously. Pay attention to the little finger, it should also comfortably press the corresponding key (k). Make sure you hear the tone of each key, at a comfortable sound level. Adjust the volume if you don’t hear the tones.</p>
-					<iframe width="640" height="384" src="https://www.youtube.com/embed/kIyEu2Sb8_A?playlist=kIyEu2Sb8_A&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allow="loop" allowfullscreen></iframe>
+					<iframe width="640" height="384" src="https://www.youtube.com/embed/kIyEu2Sb8_A?playlist=kIyEu2Sb8_A&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allowfullscreen></iframe>
 				</section>
 				<section class="page-3" hidden="hidden">
 					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px; float: right; padding-bottom: 1em;" />
@@ -1399,7 +889,7 @@ button:focus { outline: none; }
 					<p>Sequence 1 consists of four key presses, in this order:</p>
 					<h2 class="sequence-display">g – j – h – k</h2>
 					<p>(that is, index – ring – middle – little finger)</p>
-					<p><iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allow="loop" allowfullscreen></iframe></p>
+					<p><iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allowfullscreen></iframe></p>
 				</section>
 
 				<section class="page-4" hidden="hidden">
@@ -1411,8 +901,7 @@ button:focus { outline: none; }
 					<p>Try it out at a comfortable speed, you can practice it slowly now, to make sure the order is clear.</p>
 					<p>Take a little break of 1-2 seconds between each performance of the sequence. You can practice it up to 10 times.</p>
 					<span id="steppedGame">Press the 'q' key to have the computer remind you of the sequence</span>
-					<p>
-					<iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allow="loop" allowfullscreen></iframe>
+					<p><iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allowfullscreen></iframe>
 					</p>
 				</section>
 
@@ -1468,123 +957,7 @@ button:focus { outline: none; }
 				</section>
 
 				<section class="page-12" hidden="hidden">
-					<p>The training phase is over. Let's start with the real experiment.</p>
-				</section>
-
-				<section class="page-13" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-				</section>
-
-				<section class="page-14" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-					<div class="image-position">
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-					</div>
-					<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-				</section>
-
-				<section class="page-15" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-					<div class="image-position">
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-					</div>
-					<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-					<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-					obtain a reward (10 points) or not.</p>
-				</section>
-
-				<section class="page-16" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-					<div class="image-position">
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-					</div>
-					<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-					<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-					obtain a reward (10 points) or not.</p>
-					<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
-					likely give you reward!</p>
-				</section>
-
-				<section class="page-17" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-					<div class="image-position">
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-					</div>
-					<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-					<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-					obtain a reward (10 points) or not.</p>
-					<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
-					likely give you reward!</p>
-					<p>Careful though: The reward (points) associated with each sequence will change from time to time. So pay attention
-					and adapt your decisions if you think that the conditions changed.</p>
-				</section>
-
-				<section class="page-18" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-					<div class="image-position">
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" class="clickable" alt="Pink button" style="width: 150px; height; 150px;" data-page="1" />
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" class="clickable" alt="Yellow button" style="width: 150px; height; 150px;" data-page="2" />
-					</div>
-					<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-					<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-					obtain a reward (10 points) or not.</p>
-					<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
-					likely give you reward!</p>
-					<p>Careful though: The reward (points) associated with each sequence will change from time to time. So pay attention
-					and adapt your decisions if you think that the conditions changed.</p>
-					<p>Now</p>
-					<p>Start playing sequence 1 (hint: it starts with a &quot;g&quot;).</p>
-					<p>Or</p>
-					<p>Start playing sequence 2 (hint: it starts with a &quot;k&quot;).</p>
-				</section>
-
-				<section class="page-19" hidden="hidden">
-					<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
-					<countdown-clock width="100" time="5.0"></countdown-clock>
-					<p class="statusLbl">Play sequence.</p>
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" class="active-icon" alt="Yellow button" style="width: 150px; height; 150px;" />
-				</section>
-
-				<section class="page-20" hidden="hidden">
-					<h2 class="statusLbl incorrect-msg">You earned 0 points.</h2>
-					<p class="hint-text" hidden="hidden"></p>
-				</section>
-
-				<section class="page-21" hidden="hidden">
-					<h2 class="statusLbl correct-msg">You earned 10 points!</h2>
-				</section>
-
-				<section class="page-22" hidden="hidden">
-					<h2 class="statusLbl incorrect-msg">You ran out of time to play the sequence, and lost the points.</h2>
-				</section>
-
-				<section class="page-23" hidden="hidden">
-					<h2>+</h2>
-				</section>
-
-				<section class="page-24" hidden="hidden">
-					<p class="scoreboard">Your score: </p>
-					<h1>Sequence 1 or Sequence 2?</h1>
-					<div class="image-position">
-						<figure>
-							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" class="clickable" alt="Pink button" style="width: 150px; height; 150px;" data-page="1" />
-							<figcaption>(hint: it starts with a &quot;g&quot;)</figcaption>
-						</figure>
-						<figure>
-							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" class="clickable" alt="Yellow button" style="width: 150px; height; 150px;" data-page="2" />
-							<figcaption>(hint: it starts with a &quot;k&quot;)</figcaption>
-						</figure>
-					</div>
-					<p class="hint-text" hidden="hidden"></p>
+					<p>Loading...</p>
 				</section>
 			</div>
 			<div id="splash" hidden="hidden"><countdown-clock width="500" time="0.5"></countdown-clock></div>
@@ -1595,6 +968,19 @@ button:focus { outline: none; }
 `;
 	}
 
+function codaGame() {
+	return new Promise((resolve) => {
+		for (let item of document.querySelectorAll(".core-experiment section[class*='page-'")) {
+			item.hidden = true;
+		}
+
+		document.querySelector("#NextButton").hidden = false;
+		document.querySelector("#NextButton").click();
+		resolve();
+	});
+}
+
+
 	let keyDownListener;
 	let keyUpListener;
 
@@ -1603,16 +989,11 @@ button:focus { outline: none; }
 		document.querySelector("#Questions div.QuestionBody").innerHTML = docHtml;
 
 		setupVolumeControl();
-		setupIcons();
 		keyDownListener = document.addEventListener("keydown", evt => keyDownManager(evt, evt.key));
 		keyUpListener = document.addEventListener("keyup", evt => keyUpManager(evt, evt.key));
 		globalThis.onNextPage = onNextPage;
 
 		if (!customElements.get("piano-player")) customElements.define("piano-player", PianoPlayerElement);
-
-		if (!customElements.get("countdown-clock")) customElements.define("countdown-clock", CountDownClockElement);
-
-		document.querySelector(".page-19 > countdown-clock").addEventListener("timeout", evt => timeoutManager(evt));
 
 		document.querySelector("#NextButton").hidden = true;
 

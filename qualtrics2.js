@@ -57,8 +57,6 @@ const pianoJson = {
 	"totaltrials": 180,
 	"defaultOctave": 1,
 	"keymap": [
-		// {"key": "a", "note": "A", "octave": 0 },
-		// {"key": "s", "note": "B", "octave": 0 },
 		{"key": "d", "note": "C", "octave": 1 },
 		{"key": "f", "note": "D" },
 		{"key": "g", "note": "E" },
@@ -72,7 +70,6 @@ const pianoJson = {
 		{"key": "u", "note": "F#" },
 		{"key": "i", "note": "G#" },
 		{"key": "o", "note": "A#" }
-		// {"key": "w", "note": "A#", "octave": 0 }
 	]
 };
 
@@ -100,15 +97,15 @@ Qualtrics.SurveyEngine.addOnload(function()
 
 class ConfigManager {
 	constructor() {
-
 		this.flushCounter = 0;
+		Qualtrics.SurveyEngine.getEmbeddedData("${e://taskResult}");;
 		this.setup = {
 			eventLog: [],
-			round: 1,
-			trial: 0,
+			round: 23,
+			trial: 1,
 			version: 1,
 			score: 0,
-			hintCount: 0,
+			hintCount: 0
 		};
 
 		this._config = null;
@@ -146,10 +143,12 @@ class ConfigManager {
 	}
 
 	fullSave() {
-		const serialised = JSON.stringify(this.setup);
+		return new Promise(resolve => {
+			const serialised = JSON.stringify(this.setup);
 
-		Qualtrics.SurveyEngine.setEmbeddedData("taskResult", serialised);
-
+			Qualtrics.SurveyEngine.setEmbeddedData("taskResult", serialised);
+			resolve();
+		});
 	}
 
 	save() {
@@ -157,9 +156,12 @@ class ConfigManager {
 			this.flush();
 			this.flushCounter++;
 			if (this.flushCounter % 10 == 0) {
-				this.fullSave();
+				this.fullSave().then(() => {
+					resolve();
+				});
+			} else {
+				resolve();
 			}
-			resolve();
 		});
 	}
 }
@@ -351,63 +353,6 @@ function checkProbabilityOfWin(activePiano) {
 	return { "mcsScore": mcsScore, "activeProbability": activeProbability, "unchosenProbability": unchosenProbability };
 }
 
-function checkStep4(piano, keyToCheck) {
-	const roundStart = findLastIndex(eventLog, x => x.type === "startNextRound");
-
-	let numKs = 0;
-	for (let i = roundStart; i < eventLog.length; i++) {
-		const elem = eventLog[i];
-		if (elem.type === "keyup" && elem.key === keyToCheck) {
-			numKs++;
-		}
-	}
-	return (numKs > 9);
-}
-
-function evaluateSequence(roundStart, keymap, correctSequence) {
-	let typedCharacters = "";
-	const updatedEventLogs = [];
-	let res = 0;
-
-	for (let i = roundStart; i < eventLog.length; i++) {
-		const elem = eventLog[i];
-		if (elem.type !== "keydown") {
-			continue;
-		}
-		if (!keymap.some(x => x.key === elem.key)) {
-			continue;
-		}
-
-		typedCharacters += elem.key;
-		if (typedCharacters === correctSequence) {
-			updatedEventLogs.push({type: "correctSequence", time: performance.now(), sequence: correctSequence, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
-			res = 1;
-			break;
-		} else {
-			if (!correctSequence.toLowerCase().startsWith(typedCharacters.toLowerCase())) {
-				updatedEventLogs.push({type: "incorrectSequence", time: performance.now(), sequence: typedCharacters, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
-				res = 2;
-				break;
-			}
-		}
-	}
-
-	if (updatedEventLogs.length > 0) {
-		for (const item of updatedEventLogs) {
-			eventLog.push(item);
-		}
-	}
-	return res;
-}
-
-function checkStep6(piano) {
-	const roundStart = findLastIndex(eventLog, x => x.type === "startNextRound" || x.type === "correctSequence" || x.type === "incorrectSequence");
-	const keymap = piano.keymap;
-	const correctSequence = piano.notes;
-
-	return evaluateSequence(roundStart, keymap, correctSequence);
-}
-
 function checkStep19(piano) {
 	const roundStart = findLastIndex(eventLog, x => x.type === "startNextRound");
 	const keymap = piano.keymap;
@@ -524,7 +469,7 @@ function keyDownManager(evt, key) {
 	}
 
 	const prm = new Promise(resolve => {
-		if (!document.querySelector(".page-18").hidden || !document.querySelector(".page-24").hidden) {
+		if (!document.querySelector(".page-18").hidden || !document.querySelector(".page-23").hidden) {
 			if (key === "g") {
 				gamePage(1, evt, key).then(() => {
 					resolve();
@@ -566,102 +511,6 @@ function keyUpManager(evt, key) {
 		}
 
 		activePiano.keyNoteUnPressed(evt, key);
-
-		if (!document.querySelector(".page-2").hidden) {
-			if (key === " " || key === "Enter" || key === "Return" || key === "Escape") {
-				evt.preventDefault();
-				evt.stopPropagation();
-				globalThis.onNextPage(evt);
-			}
-		}
-
-		if (!document.querySelector(".page-4").hidden) {
-			if (checkStep4(activePiano, "k")) {
-				globalThis.onNextPage(evt);
-			}
-			if (key === " " || key === "Enter" || key === "Return" || key === "Escape") {
-				evt.preventDefault();
-				evt.stopPropagation();
-				globalThis.onNextPage(evt);
-			}
-		}
-
-		if (!document.querySelector(".page-9").hidden) {
-			if (checkStep4(activePiano, "h")) {
-				globalThis.onNextPage(evt);
-			}
-			if (key === " " || key === "Enter" || key === "Return" || key === "Escape") {
-				globalThis.onNextPage(evt);
-			}
-		}
-
-		if (!document.querySelector(".page-6").hidden) {
-			const seqResult = checkStep6(activePiano);
-			switch (seqResult) {
-				case 0:
-				default:
-					break;
-				case 1: {
-					globalThis.pageConfig.configPromise.then(config => {
-						const requiredTrials = (config).practicetrials;
-						const numCorrectSequences = countCorrectSequences(activePiano, requiredTrials);
-						if (numCorrectSequences == requiredTrials) {
-							globalThis.onNextPage(evt);
-						} else {
-							const statusLbl = document.querySelector(".page-6 > .statusLbl");
-							statusLbl.classList.remove("incorrect-msg");
-							statusLbl.classList.add("correct-msg");
-							statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more time";
-							if ((requiredTrials - numCorrectSequences) != 1) {
-								statusLbl.textContent = statusLbl.textContent + 's';
-							}
-						}
-					});
-					break;
-				}
-				case 2: {
-					const statusLbl = document.querySelector(".page-6 > .statusLbl");
-					statusLbl.classList.remove("correct-msg");
-					statusLbl.classList.add("incorrect-msg");
-					statusLbl.textContent = "Something went wrong. Try again.";
-					break;
-				}
-			}
-		}
-
-		if (!document.querySelector(".page-11").hidden) {
-			const seqResult = checkStep6(activePiano);
-			switch (seqResult) {
-				case 0:
-				default:
-					break;
-				case 1: {
-					globalThis.pageConfig.configPromise.then(config => {
-						const requiredTrials = (config).practicetrials;
-						const numCorrectSequences = countCorrectSequences(activePiano, requiredTrials);
-						if (numCorrectSequences == requiredTrials) {
-							globalThis.onNextPage(evt);
-						} else {
-							const statusLbl = document.querySelector(".page-11 > .statusLbl");
-							statusLbl.classList.remove("incorrect-msg");
-							statusLbl.classList.add("correct-msg");
-							statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more time";
-							if ((requiredTrials - numCorrectSequences) != 1) {
-								statusLbl.textContent = statusLbl.textContent + 's';
-							}
-						}
-					});
-					break;
-				}
-				case 2: {
-					const statusLbl = document.querySelector(".page-11 > .statusLbl");
-					statusLbl.classList.remove("correct-msg");
-					statusLbl.classList.add("incorrect-msg");
-					statusLbl.textContent = "Something went wrong. Try again.";
-					break;
-				}
-			}
-		}
 
 		if (!document.querySelector(".page-19").hidden) {
 			const seqResult = checkStep19(activePiano);
@@ -706,10 +555,6 @@ function keyUpManager(evt, key) {
 		}
 		return;
 	}
-
-	if (!document.getElementById("nxtbtn").disabled) {
-		globalThis.onNextPage(evt);
-	}
 }
 
 function splashWait(timeToWait, hideText) {
@@ -732,24 +577,17 @@ function splashWait(timeToWait, hideText) {
 
 function handleRound23() {
 	return new Promise(resolve => {
-		resolve();
-	});
-}
-
-function handleRound24() {
-	return new Promise(resolve => {
 		const trial = globalThis.pageConfig.setup.trial;
 		globalThis.pageConfig.configPromise.then(config => {
-			document.querySelector(".page-24 .scoreboard").textContent =
+			document.querySelector(".page-23 .scoreboard").textContent =
 				"Round " + trial + " of " + config.totaltrials + ".";
 			if (trial > config.totaltrials) {
 				/* The next button will be disabled for the duration of this experiment. */
-				document.querySelector("#NextButton").hidden = false;
-				document.querySelector("#NextButton").click();
-
-				for (let item of document.querySelectorAll(".QuestionBody section[class*='page-'")) {
-					item.hidden = true;
-				}
+				codaGame().then(() => {
+					resolve();
+				});
+			} else {
+				resolve();
 			}
 		});
 	});
@@ -761,7 +599,7 @@ function navigateToPage(evt) {
 	const wasMouse = evt && (evt.type.startsWith("mouse") || evt.type.startsWith("click") || evt.type.startsWith("touch"));
 	eventLog.push({ type: "startNextRound", time: performance.now(), round: round, trial: globalThis.pageConfig.setup.trial, mouse: wasMouse });
 
-	for (let item of document.querySelectorAll(".QuestionBody section[class*='page-'")) {
+	for (let item of document.querySelectorAll(".core-experiment section[class*='page-'")) {
 		item.hidden = true;
 	}
 
@@ -770,94 +608,20 @@ function navigateToPage(evt) {
 	prm1.then(() => {
 		document.querySelector(".page-" + parseInt(round)).hidden = false;
 
-		if (round === 1) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(1000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 2) {
-			document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(1000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 3) {
-			document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(1000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 4) {
-			const activePiano = document.querySelector("section.page-4 piano-player");
-			activePiano.playNextRound();
-			document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
-		} else if (round == 5) {
-			document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(2000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 6) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-		} else if (round == 7) {
-			wait(2000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 9) {
-			document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
-			const activePiano = document.querySelector("section.page-9 piano-player");
-			activePiano.playNextRound();
-		} else if (round === 10) {
-			document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(2000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 11) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-		} else if (round === 12) {
-			wait(2000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 13) {
-			document.getElementById("nxtbtn").textContent = "Continue >";
-		} else if (round === 18) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			globalThis.pageConfig.setup.trial = 1;
-		} else if (round === 19) {
+		if (round === 19) {
 			document.querySelector(".page-19 > countdown-clock").startTimer();
 		} else if (round === 20 || round === 21 || round === 22) {
 			document.querySelector(".page-19 > countdown-clock").stopTimer();
 			document.getElementById("nxtbtn").hidden = true;
 			document.getElementById("nxtbtn").disabled = true;
-			const splashWaitPrm = wait(roundWaitTime);
-			handleRound23().then(x => {
-				splashWaitPrm.then(() => {
-					globalThis.onNextPage(evt);
-				});
+			const splashWaitPrm = wait(roundWaitTime).then(() => {
+				globalThis.onNextPage(evt);
 			});
 		} else if (round === 23) {
-			globalThis.onNextPage(evt);
-		} else if (round === 24) {
 			document.getElementById("nxtbtn").hidden = true;
 			document.getElementById("nxtbtn").disabled = true;
 			document.querySelector(".page-19 piano-player").clearKeyStates();
-			handleRound24();
+			handleRound23();
 		}
 	});
 
@@ -867,7 +631,7 @@ function navigateToPage(evt) {
 
 function onNextPage(event) {
 	let round = globalThis.pageConfig.setup.round;
-	if (round === 24) {
+	if (round === 23) {
 		round = 18;
 	} else if (round === 20 || round === 21 || round === 22) {
 		round = 23;
@@ -1376,6 +1140,20 @@ button:focus { outline: none; }
 	}
 }
 
+function codaGame() {
+	return new Promise((resolve) => {
+		for (let item of document.querySelectorAll(".core-experiment section[class*='page-'")) {
+			item.hidden = true;
+		}
+		globalThis.pageConfig.fullSave().then(() => {
+			document.querySelector("#NextButton").hidden = false;
+			document.querySelector("#NextButton").click();
+			resolve();
+		});
+	});
+}
+
+
 	function buildHtml() {
 		return `
 		<div class="core-experiment">
@@ -1385,148 +1163,6 @@ button:focus { outline: none; }
 				</label>
 			</aside>
 			<div class="core-container">
-				<section class="page-1">
-					<h1>Training phase</h1>
-				</section>
-				<section class="page-2" hidden="hidden">
-					<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
-					<p>Place the index, middle, ring, little fingers of your right hand on keyboard keys g-h-j-k. Warm up by pressing the keys up and down in any order, but not simultaneously. Pay attention to the little finger, it should also comfortably press the corresponding key (k). Make sure you hear the tone of each key, at a comfortable sound level. Adjust the volume if you don’t hear the tones.</p>
-					<iframe width="640" height="384" src="https://www.youtube.com/embed/kIyEu2Sb8_A?playlist=kIyEu2Sb8_A&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allow="loop" allowfullscreen></iframe>
-				</section>
-				<section class="page-3" hidden="hidden">
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px; float: right; padding-bottom: 1em;" />
-					<p>Now you are going to practice sequence 1, represented by this image:</p>
-					<p>Sequence 1 consists of four key presses, in this order:</p>
-					<h2 class="sequence-display">g – j – h – k</h2>
-					<p>(that is, index – ring – middle – little finger)</p>
-					<p><iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allow="loop" allowfullscreen></iframe></p>
-				</section>
-
-				<section class="page-4" hidden="hidden">
-					<piano-player notes="gjhk" pace="0.5" volumecontrol="0.5"></piano-player>
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px; float: right;" />
-					<p>Sequence 1 consists of four key presses, in this order:</p>
-					<h2 class="sequence-display">g – j – h – k</h2>
-					<p>(that is, index – ring – middle – little finger)</p>
-					<p>Try it out at a comfortable speed, you can practice it slowly now, to make sure the order is clear.</p>
-					<p>Take a little break of 1-2 seconds between each performance of the sequence. You can practice it up to 10 times.</p>
-					<span id="steppedGame">Press the 'q' key to have the computer remind you of the sequence</span>
-					<p>
-					<iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allow="loop" allowfullscreen></iframe>
-					</p>
-				</section>
-
-				<section class="page-5" hidden="hidden">
-					<p>Was it enough practice? Can you remember the sequence?</p>
-					<p>&nbsp;</p>
-					<p>&nbsp;</p>
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-				</section>
-
-				<section class="page-6" hidden="hidden">
-					<piano-player notes="gjhk" pace="0.5" volumecontrol="0.5"></piano-player>
-					<p class="statusLbl">Try it out! Play it once at a time and wait for the computer to tell you whether it is correct.</p>
-					<p>Hint: It starts with the right index pressing keyboard letter g.</p>
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-				</section>
-
-				<section class="page-7" hidden="hidden">
-					<p>Now you are going to practice sequence 2, represented by this image:</p>
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-				</section>
-
-				<section class="page-8" hidden="hidden">
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px; float: right; padding-bottom: 1em;" />
-					<p>Sequence 2 consists of four key presses, in this order:</p>
-					<h2 class="sequence-display">k – g – j – h</h2>
-					<p>(that is, little - index – ring – middle finger)</p>
-				</section>
-
-				<section class="page-9" hidden="hidden">
-					<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px; float: right; padding-bottom: 1em;" />
-					<p>Sequence 2 consists of four key presses, in this order:</p>
-					<h2 class="sequence-display">k – g – j – h</h2>
-					<p>(that is, little - index – ring – middle finger)</p>
-					<p>Try it out at a comfortable speed, you can practice it slowly now, to make sure the order is clear.</p>
-					<p>Take a little break of 1-2 seconds between each performance of the sequence. You can practice it up to 10 times.</p>
-					<span id="steppedGame">Press the 'q' key to have the computer remind you of the sequence</span>
-				</section>
-
-				<section class="page-10" hidden="hidden">
-					<p>Was it enough practice? Can you remember the sequence?</p>
-					<p>&nbsp;</p>
-					<p>&nbsp;</p>
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-				</section>
-
-				<section class="page-11" hidden="hidden">
-					<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
-					<p class="statusLbl">Try it out! Play it once at a time and wait for the computer to tell you whether it is correct.</p>
-					<p>Hint: It starts with the right index pressing keyboard letter k.</p>
-					<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-				</section>
-
-				<section class="page-12" hidden="hidden">
-					<p>The training phase is over. Let's start with the real experiment.</p>
-				</section>
-
-				<section class="page-13" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-				</section>
-
-				<section class="page-14" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-					<div class="image-position">
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-					</div>
-					<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-				</section>
-
-				<section class="page-15" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-					<div class="image-position">
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-					</div>
-					<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-					<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-					obtain a reward (10 points) or not.</p>
-				</section>
-
-				<section class="page-16" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-					<div class="image-position">
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-					</div>
-					<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-					<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-					obtain a reward (10 points) or not.</p>
-					<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
-					likely give you reward!</p>
-				</section>
-
-				<section class="page-17" hidden="hidden">
-					<h1>Experiment Main Phase.</h1>
-					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
-					<div class="image-position">
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Pink button" style="width: 150px; height; 150px;" />
-						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Yellow button" style="width: 150px; height; 150px;" />
-					</div>
-					<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
-					<p>Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
-					obtain a reward (10 points) or not.</p>
-					<p>Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
-					likely give you reward!</p>
-					<p>Careful though: The reward (points) associated with each sequence will change from time to time. So pay attention
-					and adapt your decisions if you think that the conditions changed.</p>
-				</section>
-
 				<section class="page-18" hidden="hidden">
 					<h1>Experiment Main Phase.</h1>
 					<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
@@ -1568,10 +1204,6 @@ button:focus { outline: none; }
 				</section>
 
 				<section class="page-23" hidden="hidden">
-					<h2>+</h2>
-				</section>
-
-				<section class="page-24" hidden="hidden">
 					<p class="scoreboard">Your score: </p>
 					<h1>Sequence 1 or Sequence 2?</h1>
 					<div class="image-position">
