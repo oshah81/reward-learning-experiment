@@ -112,12 +112,14 @@
 	</script>
 	<script>
 		window.finishPage = evt => {
-			location.href = "piano2.html";
+			document.querySelector(".QuestionBody").textContent = JSON.stringify(globalThis.eventLog);
+			document.querySelector(".QuestionBody").hidden = false;
 		};
 	</script>
 	<script type="module">
 		async function doInit() {
 			(await globalThis.pageConfig.configPromise).practicetrials = 1;
+			(await globalThis.pageConfig.configPromise).totaltrials = 5;
 		}
 
 		window.addEventListener("load", e => {

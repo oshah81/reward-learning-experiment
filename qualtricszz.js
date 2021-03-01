@@ -340,8 +340,8 @@ function setupIcons() {
 }
 
 function checkProbabilityOfWin(activePiano) {
-	const activeProbability = globalThis.pageConfig.probJson.probability1[globalThis.pageConfig.setup.trial];
-	const unchosenProbability = globalThis.pageConfig.probJson.probability2[globalThis.pageConfig.setup.trial];
+	const activeProbability = globalThis.pageConfig.probJson.probability1[globalThis.pageConfig.setup.trial - 2];
+	const unchosenProbability = globalThis.pageConfig.probJson.probability2[globalThis.pageConfig.setup.trial - 2];
 
 	const mcsScore = Math.random();
 
@@ -1079,11 +1079,12 @@ function iosShimHack() {
 class PianoPlayerElement extends HTMLElement {
 	constructor() {
 		super();
-		this.oscList = [];
+
 		this.keymap = null;
 		this.defaultOctave = null;
 		this._audioContextRefCount = 0;
 		this.resizeObserver = new ResizeObserver(entries => this.onResize(entries));
+		this.hookedEventListeners = [];
 
 		this.currentNote = 0;
 
@@ -1128,10 +1129,10 @@ button:focus { outline: none; }
 
 	disconnectedCallback() {
 		this.clearKeyStates();
+		this.resizeObserver.disconnect();
 		for (const item of this.hookedEventListeners) {
 			item.elm.removeEventListener(item.name, item.evt);
 		}
-		this.resizeObserver.disconnect();
 	}
 
 	attributeChangedCallback(name, oldVal, newVal) {
@@ -1205,7 +1206,7 @@ button:focus { outline: none; }
 			eventLog.push({ type: "keydown", time: performance.now(), key: key, mouse: wasMouse, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial });
 
 			const matchedElem = this.shadow.querySelector(".keyboard .key[data-note='" + note + "'][data-octave='" + octave + "']");
-			this.oscList[octave + note] = this.playTone(matchedElem.dataset.freq);
+			this.playTone(matchedElem.dataset.freq);
 			matchedElem.dataset.pressed = "yes";
 		}
 	}
@@ -1232,16 +1233,15 @@ button:focus { outline: none; }
 	}
 
 	hookEvents(keyElement) {
-		this.hookedListeners = [
+		this.hookedEventListeners.concat([
 			{elm: keyElement, name: "touchstart", evt: keyElement.addEventListener("touchstart", evt => this.notePressed(evt), false) },
 			{elm: keyElement, name: "touchend", evt: keyElement.addEventListener("touchend", evt => this.noteReleased(evt), false) },
 			{elm: keyElement, name: "mousedown", evt: keyElement.addEventListener("mousedown", evt => this.notePressed(evt), false) },
 			{elm: keyElement, name: "mouseup", evt: keyElement.addEventListener("mouseup", evt => this.noteReleased(evt), false) },
 			{elm: keyElement, name: "mouseover", evt: keyElement.addEventListener("mouseover", evt => this.notePressed(evt), false) },
 			{elm: keyElement, name: "mouseleave", evt: keyElement.addEventListener("mouseleave", evt => this.noteReleased(evt), false) }
-		];
+		]);
 	}
-
 
 	playSequence(sequence) {
 		if (sequence.length == 0) {
@@ -1254,7 +1254,7 @@ button:focus { outline: none; }
 		const note = matchedKey.note;
 
 		const matchedElem = this.shadow.querySelector(".keyboard .key[data-note='" + note + "'][data-octave='" + octave + "']");
-		this.oscList[octave + note] = this.playTone(matchedElem.dataset.freq);
+		this.playTone(matchedElem.dataset.freq);
 		matchedElem.dataset.pressed = "yes";
 
 		const pace = parseFloat(this.pace) * 1000.0;
@@ -1304,29 +1304,46 @@ button:focus { outline: none; }
 		osc.type = "triangle";
 		envelope.gain.value = this.volumeControl;
 
-		envelope.gain.exponentialRampToValueAtTime(0.001, ctt.currentTime + decayRate);
+		// envelope.gain.exponentialRampToValueAtTime(0.001, ctt.currentTime + decayRate);
 
 		osc.connect(envelope);
 		envelope.connect(ctt.destination);
 
 		osc.start(ctt.currentTime);
 
+		let continuing = true;
+		let start = null;
+
 		setTimeout(() => {
-			const timeout = (envelope.gain.value == this.volumeControl) ? 250 : 2000;
+			continuing = false;
 
-			setTimeout(() => {
-				osc.stop(ctt.currentTime);
-				osc.disconnect(envelope);
-				envelope.disconnect(ctt);
+			osc.stop(ctt.currentTime);
+			osc.disconnect(envelope);
+			envelope.disconnect(ctt);
 
-				if (--this._audioContextRefCount === 0) {
-					this._audioContext.close();
-					this._audioContext = null;
-				}
-			}, timeout);
-		}, 10);
+			if (--this._audioContextRefCount === 0) {
+				this._audioContext.close();
+				this._audioContext = null;
+			}
+		}, 2500);
 
-		return osc;
+		const fadeOutAnim = (timestamp) => {
+			if (start === null) {
+				start = timestamp;
+			}
+			const elapsed = timestamp - start;
+
+			// apply formula vol * exp (1000rx) where r = ln(.001/vol)/2500
+
+			const r = Math.log(0.001/this.volumeControl/1000)/2500.0;
+			envelope.gain.value = this.volumeControl * Math.exp(r*elapsed);
+
+			if (continuing) {
+				requestAnimationFrame(fadeOutAnim);
+			}
+		};
+
+		requestAnimationFrame(fadeOutAnim);
 	}
 
 	notePressed(event) {
