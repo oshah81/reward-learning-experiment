@@ -86,19 +86,28 @@
 			"readyList": [],
 			"setEmbeddedData": function (cb, val) {
 				console.log(cb);
+			},
+			"showNextButton": function() {
+				document.getElementById("NextButton").style.visibility = "initial";
+			},
+			"hideNextButton": function() {
+				document.getElementById("NextButton").style.visibility = "hidden";
+			},
+			"clickNextButton": function() {
+				document.getElementById("NextButton").click();
 			}
 		}
 	};
 
 	window.addEventListener("load", function (evt) {
 		for (let item of Qualtrics.SurveyEngine.readyList) {
-			item();
+			item(window.Qualtrics);
 		}
 	});
 
 	document.addEventListener("unload", function (evt) {
 		for (let item of Qualtrics.SurveyEngine.unloadList) {
-			item();
+			item(window.Qualtrics);
 		}
 	});
 
@@ -106,8 +115,11 @@
 	<script src="qualtricszz.js" type="text/javascript">
 	</script>
 	<script>
+		getLangForTask = function() {
+			return "it";
+		}
 		for (let item of Qualtrics.SurveyEngine.loadList) {
-			item();
+			item(window.Qualtrics);
 		}
 	</script>
 	<script>

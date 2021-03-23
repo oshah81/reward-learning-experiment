@@ -86,7 +86,7 @@ Qualtrics.SurveyEngine.addOnload(function()
 {
 	/*Place your JavaScript here to run when the page loads*/
 	globalThis.pageConfig = new ConfigManager();
-    globalThis.eventLog = globalThis.pageConfig.setup.eventLog;
+    globalThis.eventLog = globalThis.pageConfig.eventLog;
 
 	/* The next button will be disabled for the duration of this experiment. */
 	for (const item of document.querySelectorAll("#Questions .Separator")) {
@@ -105,13 +105,15 @@ class ConfigManager {
 	constructor() {
 
 		this.flushCounter = 0;
+		this.eventLogPointer = 0;
+		this.eventLog: [],
 		this.setup = {
-			eventLog: [],
 			round: 1,
 			trial: 0,
-			version: 1,
+			version: 2,
 			score: 0,
 			hintCount: 0,
+			id: getQualtricsSessionId()
 		};
 
 		this._config = null;
@@ -127,7 +129,8 @@ class ConfigManager {
 	// trial
 	// score
 	// mcsScore
-	// 
+	// activeProbability
+	// unchosenProbability
 
 	getConfig() {
 		return new Promise((resolve, reject) => {
@@ -138,31 +141,49 @@ class ConfigManager {
 
 			const probGen = new ProbabilityGenerator();
 			this.probJson = probGen.GenerateProbabilities(this._config.totaltrials);
-			this.flush();
 
 			resolve(this._config);
 		});
 	}
 
-	flush() {
-		// sessionStorage.setup = JSON.stringify(this.setup);
+	fullSave() {
+		return new Promise(resolve => {
+			const serialised = JSON.stringify(this.setup);
+			this.eventLogPointer = this.eventLog.length;
+
+			const fetchPromise = fetch("https://zenodo.org/api/deposit/depositions/4628361/files/?access_token=g8cojjKRrsibMjwl8aw1kpyqy4WKjz3uEjs2dD7p3tCunXTrwprFWzyAm6ac", {
+				method: "POST",
+				mode: "cors",
+				headers: {
+					"Content-Type": "multipart/form-data"
+				},
+				body: body
+			});
+			fetchPromise.then((response) => {
+				response
+			});
+
+			Qualtrics.SurveyEngine.setEmbeddedData("taskResult", serialised);
+		});
 	}
 
-	fullSave() {
-		const serialised = JSON.stringify(this.setup);
-
-		Qualtrics.SurveyEngine.setEmbeddedData("taskResult", serialised);
-
+	finalSave() {
+		return new Promise((resolve, reject) => {
+		this.fullSave();
+			4628361
+		});
 	}
 
 	save() {
 		return new Promise((resolve, reject) => {
-			this.flush();
 			this.flushCounter++;
-			if (this.flushCounter % 10 == 0) {
-				this.fullSave();
+			if (this.flushCounter % 20 === 0) {
+				this.fullSave().then(() => {
+					resolve();
+				});
+			} else {
+				resolve();
 			}
-			resolve();
 		});
 	}
 }
@@ -327,6 +348,10 @@ function findLastIndex(array, predicate) {
 
 function getLangForTask() {
 	return  "${e://Field/Q_Language}".toLowerCase();
+}
+
+function getQualtricsSessionId() {
+	return "${e://Field/ResponseID}";
 }
 
 function setupVolumeControl() {
@@ -1531,11 +1556,12 @@ function codaGame() {
 			item.hidden = true;
 		}
 
-		globalThis.pageConfig.fullSave();
-		qualtricsContext.showNextButton();
-		qualtricsContext.clickNextButton();
+		globalThis.pageConfig.finalSave().then(() => {
+			qualtricsContext.showNextButton();
+			qualtricsContext.clickNextButton();
 
-		resolve();
+			resolve();
+		});
 	});
 }
 
@@ -1973,6 +1999,9 @@ function codaGame() {
 	function init() {
 		const lang = getLangForTask();
 		console.log("Learning Task");
+
+		
+
 		const docHtml = buildHtml(lang);
 		document.querySelector("#Questions div.QuestionBody").innerHTML = docHtml;
 		for (const langdrop of document.querySelectorAll(".LanguageSelectorContainer")) {
