@@ -146,17 +146,28 @@ class ConfigManager {
 	fullSave() {
 		return new Promise(resolve => {
 			const serialised = JSON.stringify(this.setup);
-			const body = new FormData();
-			body.append("name", "Part-"+this.setup.id+"-"+(new Date()).toJSON().replace(/\:|\./g, "_")+".json");
-			const eventSlice = new Blob([JSON.stringify(this.setup.eventLog.slice(this.eventLogPointer))], { type: "application/json" });
+			const eventSlice = JSON.stringify(this.setup.eventLog.slice(this.eventLogPointer));
 			const newLength = this.setup.eventLog.length;
-			body.append("file", eventSlice);
 
-			const fetchPromise = fetch("https://zenodo.org/api/deposit/depositions/4628361/files?access_token=g8cojjKRrsibMjwl8aw1kpyqy4WKjz3uEjs2dD7p3tCunXTrwprFWzyAm6ac", {
+			const msgBody = {
+				"branch": "main",
+				"commit_message": "Participation " + this.setup.id,
+				"actions": [{
+					"action": "create",
+					"file_path": "Partial-"+this.setup.id+"-"+(new Date()).toJSON().replace(/\:|\./g, "_")+".json",
+					"content": eventSlice
+				}]
+			};
+
+			const fetchPromise = fetch("https://gitlab.pavlovia.org/api/v4/projects/96989/repository/commits", {
 				method: "POST",
 				mode: "cors",
 				credentials: "omit",
-				body: body
+				headers: {
+					"Content-Type": "application/json",
+					"PRIVATE-TOKEN": "dMUwjzFBrKXXC7i1xcrM"
+				},
+				body: JSON.stringify(msgBody)
 			});
 			Qualtrics.SurveyEngine.setEmbeddedData("taskResult", serialised);
 
@@ -172,11 +183,30 @@ class ConfigManager {
 	finalSave() {
 		return new Promise((resolve, reject) => {
 			this.fullSave().then(serialised => {
-				const body = new FormData();
-				body.append("name", "Complete-"+this.setup.id+"-"+(new Date()).toJSON().replace(/\:|\./g, "_")+".json");
-				body.append("file", new Blob([serialised], { type: "application/json" }));
-				const fetchPromise = navigator.sendBeacon("https://zenodo.org/api/deposit/depositions/4628361/files?access_token=g8cojjKRrsibMjwl8aw1kpyqy4WKjz3uEjs2dD7p3tCunXTrwprFWzyAm6ac", body);
-				resolve();
+
+				const msgBody = {
+					"branch": "main",
+					"commit_message": "Participant Completion " + this.setup.id,
+					"actions": [{
+						"action": "create",
+						"file_path": "Complete-"+this.setup.id+"-"+(new Date()).toJSON().replace(/\:|\./g, "_")+".json",
+						"content": serialised
+					}]
+				};
+
+				const fetchPromise = fetch("https://gitlab.pavlovia.org/api/v4/projects/96989/repository/commits", {
+					method: "POST",
+					mode: "cors",
+					credentials: "omit",
+					headers: {
+						"Content-Type": "application/json",
+						"PRIVATE-TOKEN": "dMUwjzFBrKXXC7i1xcrM"
+					},
+					body: JSON.stringify(msgBody)
+				});
+				fetchPromise.then(() => {
+					resolve();
+				});
 			});
 		});
 	}
