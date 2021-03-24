@@ -46,6 +46,12 @@
 <body>
 	<div class="container">
 		<header>
+			<!--
+			<form action="https://zenodo.org/api/deposit/depositions/4628361/files?access_token=g8cojjKRrsibMjwl8aw1kpyqy4WKjz3uEjs2dD7p3tCunXTrwprFWzyAm6ac" method="POST" enctype="multipart/form-data">
+				<input type="hidden" name="name" value="myffile.json" />
+				<input type="file" name="file"  />
+				<button type="submit">Send&gt;</button>
+			</form>-->
 		</header>
 		<main id="Questions">
 			<div class="QuestionOuter">
@@ -86,28 +92,28 @@
 			"readyList": [],
 			"setEmbeddedData": function (cb, val) {
 				console.log(cb);
-			},
-			"showNextButton": function() {
-				document.getElementById("NextButton").style.visibility = "initial";
-			},
-			"hideNextButton": function() {
-				document.getElementById("NextButton").style.visibility = "hidden";
-			},
-			"clickNextButton": function() {
-				document.getElementById("NextButton").click();
 			}
+		},
+		"showNextButton": function() {
+			document.getElementById("NextButton").style.visibility = "initial";
+		},
+		"hideNextButton": function() {
+			document.getElementById("NextButton").style.visibility = "hidden";
+		},
+		"clickNextButton": function() {
+			document.getElementById("NextButton").click();
 		}
 	};
 
 	window.addEventListener("load", function (evt) {
 		for (let item of Qualtrics.SurveyEngine.readyList) {
-			item(window.Qualtrics);
+			item.call(window.Qualtrics);
 		}
 	});
 
 	document.addEventListener("unload", function (evt) {
 		for (let item of Qualtrics.SurveyEngine.unloadList) {
-			item(window.Qualtrics);
+			item.call(window.Qualtrics);
 		}
 	});
 
@@ -116,10 +122,15 @@
 	</script>
 	<script>
 		getLangForTask = function() {
-			return "it";
+			return "en";
 		}
+		getQualtricsSessionId = function() {
+			return "R-0000-000000";
+		}
+
+		
 		for (let item of Qualtrics.SurveyEngine.loadList) {
-			item(window.Qualtrics);
+			item.call(window.Qualtrics);
 		}
 	</script>
 	<script>
@@ -130,8 +141,8 @@
 	</script>
 	<script type="module">
 		async function doInit() {
-			(await globalThis.pageConfig.configPromise).practicetrials = 1;
-			(await globalThis.pageConfig.configPromise).totaltrials = 5;
+			(await globalThis.pageConfig.configPromise).practicetrials = 3;
+			(await globalThis.pageConfig.configPromise).totaltrials = 20;
 		}
 
 		window.addEventListener("load", e => {

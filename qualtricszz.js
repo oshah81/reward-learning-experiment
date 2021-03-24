@@ -86,7 +86,7 @@ Qualtrics.SurveyEngine.addOnload(function()
 {
 	/*Place your JavaScript here to run when the page loads*/
 	globalThis.pageConfig = new ConfigManager();
-    globalThis.eventLog = globalThis.pageConfig.eventLog;
+    globalThis.eventLog = globalThis.pageConfig.setup.eventLog;
 
 	/* The next button will be disabled for the duration of this experiment. */
 	for (const item of document.querySelectorAll("#Questions .Separator")) {
@@ -106,8 +106,8 @@ class ConfigManager {
 
 		this.flushCounter = 0;
 		this.eventLogPointer = 0;
-		this.eventLog: [],
 		this.setup = {
+			eventLog: [],
 			round: 1,
 			trial: 0,
 			version: 2,
@@ -135,9 +135,6 @@ class ConfigManager {
 	getConfig() {
 		return new Promise((resolve, reject) => {
 			this._config = pianoJson;
-			const headers = new Headers();
-			headers.append("Content-Type", "application/x-www-form-urlencoded");
-			const body = this.setup.id ? "id=" + this.setup.id : "";
 
 			const probGen = new ProbabilityGenerator();
 			this.probJson = probGen.GenerateProbabilities(this._config.totaltrials);
@@ -149,28 +146,38 @@ class ConfigManager {
 	fullSave() {
 		return new Promise(resolve => {
 			const serialised = JSON.stringify(this.setup);
-			this.eventLogPointer = this.eventLog.length;
+			const body = new FormData();
+			body.append("name", "Part-"+this.setup.id+"-"+(new Date()).toJSON().replace(/\:|\./g, "_")+".json");
+			const eventSlice = new Blob([JSON.stringify(this.setup.eventLog.slice(this.eventLogPointer))], { type: "application/json" });
+			const newLength = this.setup.eventLog.length;
+			body.append("file", eventSlice);
 
-			const fetchPromise = fetch("https://zenodo.org/api/deposit/depositions/4628361/files/?access_token=g8cojjKRrsibMjwl8aw1kpyqy4WKjz3uEjs2dD7p3tCunXTrwprFWzyAm6ac", {
+			const fetchPromise = fetch("https://zenodo.org/api/deposit/depositions/4628361/files?access_token=g8cojjKRrsibMjwl8aw1kpyqy4WKjz3uEjs2dD7p3tCunXTrwprFWzyAm6ac", {
 				method: "POST",
 				mode: "cors",
-				headers: {
-					"Content-Type": "multipart/form-data"
-				},
+				credentials: "omit",
 				body: body
 			});
-			fetchPromise.then((response) => {
-				response
-			});
-
 			Qualtrics.SurveyEngine.setEmbeddedData("taskResult", serialised);
+
+			fetchPromise.then((response) => {
+				if (response.ok) {
+					this.eventLogPointer = newLength;
+				}
+				resolve(serialised);
+			});
 		});
 	}
 
 	finalSave() {
 		return new Promise((resolve, reject) => {
-		this.fullSave();
-			4628361
+			this.fullSave().then(serialised => {
+				const body = new FormData();
+				body.append("name", "Complete-"+this.setup.id+"-"+(new Date()).toJSON().replace(/\:|\./g, "_")+".json");
+				body.append("file", new Blob([serialised], { type: "application/json" }));
+				const fetchPromise = navigator.sendBeacon("https://zenodo.org/api/deposit/depositions/4628361/files?access_token=g8cojjKRrsibMjwl8aw1kpyqy4WKjz3uEjs2dD7p3tCunXTrwprFWzyAm6ac", body);
+				resolve();
+			});
 		});
 	}
 
@@ -878,144 +885,142 @@ function navigateToPage(evt) {
 
 	const prm1 = globalThis.pageConfig.save();
 
-	prm1.then(() => {
-		document.querySelector(".page-" + parseInt(round)).hidden = false;
+	document.querySelector(".page-" + parseInt(round)).hidden = false;
 
-		if (round === 1) {
+	if (round === 1) {
+		document.getElementById("nxtbtn").hidden = false;
+		document.getElementById("nxtbtn").disabled = false;
+	} else if (round === 2) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o la barra spaziatrice per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
+				break;
+		}
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		wait(1000).then(() => {
 			document.getElementById("nxtbtn").hidden = false;
 			document.getElementById("nxtbtn").disabled = false;
-		} else if (round === 2) {
-			switch (lang) {
-				case "it":
-					document.getElementById("nxtbtn").textContent = "Premi qui o la barra spaziatrice per continuare";
-					break;
-				default:
-					document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
-					break;
-			}
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(1000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 3) {
-			switch (lang) {
-				case "it":
-					document.getElementById("nxtbtn").textContent = "Premi qui o qualsiasi altro tasto per continuare";
-					break;
-				default:
-					document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
-					break;
-			}
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(1000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 4) {
-			const activePiano = document.querySelector("section.page-4 piano-player");
-			activePiano.playNextRound();
-			switch (lang) {
-				case "it":
-					document.getElementById("nxtbtn").textContent = "Premi qui o la barra spaziatrice per continuare";
-					break;
-				default:
-					document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
-					break;
-			}
-		} else if (round == 5) {
-			switch (lang) {
-				case "it":
-					document.getElementById("nxtbtn").textContent = "Premi qui o qualsiasi altro tasto per continuare";
-					break;
-				default:
-					document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
-					break;
-			}
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(2000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 6) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-		} else if (round == 7) {
-			wait(2000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 9) {
-			switch (lang) {
-				case "it":
-					document.getElementById("nxtbtn").textContent = "Premi qui o la barra spaziatrice per continuare";
-					break;
-				default:
-					document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
-					break;
-			}
-			const activePiano = document.querySelector("section.page-9 piano-player");
-			activePiano.playNextRound();
-		} else if (round === 10) {
-			switch (lang) {
-				case "it":
-					document.getElementById("nxtbtn").textContent = "Premi qui o qualsiasi altro tasto per continuare";
-					break;
-				default:
-					document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
-					break;
-			}
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			wait(2000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 11) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-		} else if (round === 12) {
-			wait(2000).then(() => {
-				document.getElementById("nxtbtn").hidden = false;
-				document.getElementById("nxtbtn").disabled = false;
-			});
-		} else if (round === 13) {
-			switch (lang) {
-				case "it":
-					document.getElementById("nxtbtn").textContent = "Continua >";
-					break;
-				default:
-					document.getElementById("nxtbtn").textContent = "Continue >";
-					break;
-			}
-		} else if (round === 18) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			globalThis.pageConfig.setup.trial = 1;
-		} else if (round === 19) {
-			document.querySelector(".page-19 > countdown-clock").startTimer();
-		} else if (round === 20 || round === 21 || round === 22) {
-			document.querySelector(".page-19 > countdown-clock").stopTimer();
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			const splashWaitPrm = wait(roundWaitTime);
-			handleRound23().then(x => {
-				splashWaitPrm.then(() => {
-					globalThis.onNextPage(evt);
-				});
-			});
-		} else if (round === 23) {
-			globalThis.onNextPage(evt);
-		} else if (round === 24) {
-			document.getElementById("nxtbtn").hidden = true;
-			document.getElementById("nxtbtn").disabled = true;
-			document.querySelector(".page-19 piano-player").clearKeyStates();
-			handleRound24(lang);
+		});
+	} else if (round === 3) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o qualsiasi altro tasto per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
+				break;
 		}
-	});
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		wait(1000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 4) {
+		const activePiano = document.querySelector("section.page-4 piano-player");
+		activePiano.playNextRound();
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o la barra spaziatrice per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
+				break;
+		}
+	} else if (round == 5) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o qualsiasi altro tasto per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
+				break;
+		}
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		wait(2000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 6) {
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+	} else if (round == 7) {
+		wait(2000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 9) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o la barra spaziatrice per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
+				break;
+		}
+		const activePiano = document.querySelector("section.page-9 piano-player");
+		activePiano.playNextRound();
+	} else if (round === 10) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o qualsiasi altro tasto per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
+				break;
+		}
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		wait(2000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 11) {
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+	} else if (round === 12) {
+		wait(2000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 13) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Continua >";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Continue >";
+				break;
+		}
+	} else if (round === 18) {
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		globalThis.pageConfig.setup.trial = 1;
+	} else if (round === 19) {
+		document.querySelector(".page-19 > countdown-clock").startTimer();
+	} else if (round === 20 || round === 21 || round === 22) {
+		document.querySelector(".page-19 > countdown-clock").stopTimer();
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		const splashWaitPrm = wait(roundWaitTime);
+		handleRound23().then(x => {
+			splashWaitPrm.then(() => {
+				globalThis.onNextPage(evt);
+			});
+		});
+	} else if (round === 23) {
+		globalThis.onNextPage(evt);
+	} else if (round === 24) {
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		document.querySelector(".page-19 piano-player").clearKeyStates();
+		handleRound24(lang);
+	}
 
 	return prm1;
 }
