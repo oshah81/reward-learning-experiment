@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Player Piano</title>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+</head>
+<body>
+	<div class="container">
+		<header>
+			<button onclick="runTest(event)">Start</button>
+		</header>
+		<main id="Questions">
+			<div class="QuestionBody">
+			</div>
+		</main>
+		
+	</div>
+
+	<script type="module">
+		async function runTest(evt) {
+			evt.preventDefault();
+			evt.stopPropagation();
+			const id = "R000-00001";
+			const serialised = {
+				"round":24,
+				"trial":181,
+				"version":1,
+				"score":880,
+				"hintCount":4
+			};
+			const msgBody = {
+				"branch": "main",
+				"commit_message": "Participation " + (new Date()).toJSON(),
+				"actions": [{
+					"action": "create",
+					"file_path": "Part-"+id+"-"+(new Date()).toJSON().replace(/\:|\./g, "_")+".json",
+					"content": JSON.stringify(serialised)
+				}]
+			};
+
+			const api = await fetch("https://gitlab.pavlovia.org/api/v4/projects/96989/repository/commits", {
+				method: "POST",
+				mode: "cors",
+				headers: {
+					"Content-Type": "application/json",
+					"PRIVATE-TOKEN": "dMUwjzFBrKXXC7i1xcrM"
+				},
+				body: JSON.stringify(msgBody)
+			});
+			/*
+			dMUwjzFBrKXXC7i1xcrM
+			85b8bf2c9c04e8964e91711a805b6dbd5814de98
+			*/
+
+			if (!api.ok) {
+				alert("didn't save");
+			} else {
+				const data = await api.json();
+				console.log(data);
+			}
+		}
+
+		globalThis.runTest = runTest;
+
+	</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+% IMPORTANT: YOU NEED TO CHANGE THE LINE FOLLOWING THIS COMMENT TO THE PATH
+% OF THE Data FOLDER
+basepath = "..\pianolab\data";
+
+olds = readcell("Old.xlsx");
+olds = olds(:, 1);
+olds = olds(2:numel(olds));
+
+youngs = readcell("Young.xlsx");
+youngs = youngs(:, 1);
+youngs = youngs(2:numel(youngs));
+
+pds = readcell("PD.xlsx");
+pds = pds(:, 1);
+pds = pds(2:numel(pds));
+
+
+fileList = dir(basepath + "\" + "Complete-*.json");
+fileArray = {fileList.name};
+close all;
+youngFlips = [];
+pdFlips = [];
+oldFlips = [];
+
+for i = 1:numel(fileArray)
+    f = fileArray(i);
+
+    chartResults = ParseFile(basepath, string(f));
+
+    responseID = string(chartResults{1, "participant"});
+
+    probabilities = table2array(chartResults(:, "probability1"));
+    timings = table2array(chartResults(:, "time"));
+    y = table2array(chartResults(:, "win1"));
+    u = table2array(chartResults(:,"sequence"));
+
+    %% MODEL 5: Perceptual input data modelled with RW and response model modelled with sigmoid
+
+    previousSequence = null;
+
+    for j = 1:numel(u)
+        if (previousSequence == null)
+            flip += 1;
+        end
+    end
+
+    if (any(olds(:) == responseID))
+        oldFlips(end+1) = flip;
+    end
+
+    if (any(pds(:) == responseID))
+        pdFlips(end+1) = flip;
+    end
+
+    if (any(youngs(:) == responseID))
+        youngFlips = flip;
+    end
+
+end

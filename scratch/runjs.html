@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Player Piano</title>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+	<!--
+	<script src="https://www.gstatic.com/charts/loader.js"></script>
+	<script>
+	  google.charts.load('current', {packages: ['corechart']});
+	  google.charts.setOnLoadCallback(drawChart);
+
+		function drawChart() {
+		}
+	</script>
+	<script src="prob_bandit2.js"></script>
+	-->
+</head>
+<body>
+	<div class="container">
+		<header>
+			<button onclick="runTest(event)">Start</button>
+			<button onclick="globalThis.playNote(event)">Play Note</button>
+		</header>
+		<main id="Questions">
+			<div class="QuestionBody">
+			</div>
+		</main>
+		
+	</div>
+
+	<!--
+	<script>
+		function runTest(event) {
+			doplot(180);
+		}
+	</script>
+	-->
+
+	<script type="module">
+
+		function iosShimHack() {
+			window.AudioContext = window.AudioContext || window.webkitAudioContext;
+			return window.AudioContext;
+		}
+	
+		class ABC {
+			constructor() {
+				this._audioContextRefCount = 0;
+				this.volumeControl = 0.5;
+			}
+			
+			playTone(freq) {
+				const ctt = new (AudioContext || webkitAudioContext)();
+				const osc = ctt.createOscillator();
+
+				const decayRate = 1.5;
+				const envelope = ctt.createGain();
+
+				osc.frequency.value = parseFloat(freq);
+				osc.type = "triangle";
+				envelope.gain.value = this.volumeControl;
+
+				osc.connect(envelope);
+				envelope.connect(ctt.destination);
+
+				osc.start(ctt.currentTime);
+
+				let continuing = true;
+				let start = null;
+
+				setTimeout(() => {
+					continuing = false;
+
+					osc.stop(ctt.currentTime);
+					osc.disconnect(envelope);
+					envelope.disconnect(ctt);
+
+					ctt.close();
+				}, 2500);
+
+				const fadeOutAnim = (timestamp) => {
+					if (start === null) {
+						start = timestamp;
+					}
+					const elapsed = timestamp - start;
+
+					// apply formula vol * exp (1000rx) where r = ln(.001/vol)/2500
+
+					const r = Math.log(0.001/this.volumeControl/1000)/2500.0;
+					envelope.gain.value = this.volumeControl * Math.exp(r*elapsed);
+
+					if (continuing) {
+						requestAnimationFrame(fadeOutAnim);
+					}
+				};
+
+				requestAnimationFrame(fadeOutAnim);
+				return osc;
+			}
+
+		}
+
+		const abc = new ABC();
+		window.playNote = event => {
+			abc.playTone(440);
+		};
+
+	</script>
+</body>
+</html>
