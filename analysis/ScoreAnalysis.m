@@ -1,6 +1,6 @@
 % IMPORTANT: YOU NEED TO CHANGE THE LINE FOLLOWING THIS COMMENT TO THE PATH
 % OF THE Data FOLDER
-basepath = "..\pianolab\data";
+basepath = "..\data";
 
 olds = readcell("Old.xlsx");
 olds = olds(:, 1);
