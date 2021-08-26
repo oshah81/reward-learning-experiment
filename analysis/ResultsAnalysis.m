@@ -21,7 +21,7 @@ fileArray = {fileList.name};
 
 close all;
 
-chartResults = ParseFile(basepath, "Complete-R_1pSfCQXqJk4yBcd-2021-05-10T19_19_11_440Z.json");
+chartResults = ParseFile(basepath, "Complete-R_2rr6058WlzrfXVe-2021-04-06T12_36_35_351Z.json");
 
 responseID = string(chartResults{1, "participant"});
 
@@ -69,19 +69,6 @@ ehgf_binary_config.omsa = [NaN 1 4];
 
 est.model{2} = tapas_fitModel(y, u, ehgf_binary_config, unitsq_sgm_config, optim_config);
 
-
-%% MODEL 3: Perceptual input data modelled with HGF and response modelled with Sigmoid.
-%% hyperparameter omsa set to [NaN 1 4]
-ehgf_binary_config = tapas_ehgf_binary_config();
-unitsq_sgm_config = tapas_unitsq_sgm_config();
-
-optim_config = tapas_quasinewton_optim_config();
-
-% hyper parameter tuning.
-ehgf_binary_config.omsa = [NaN -3 -6];
-
-est.model{3} = tapas_fitModel(y, u, ehgf_binary_config, unitsq_sgm_config, optim_config);
-
 %% MODEL 4: Perceptual input data modelled with eHGF and response model modelled with mu3 sigmoid
 %% See Diaconescu's paper
 
@@ -98,18 +85,23 @@ ehgf_binary_config.logsa_0sa = [NaN 0 1];
 est.model{4} = tapas_fitModel(y, u, ehgf_binary_config, unitsq_sgm_config, optim_config);
 
 
-%% MODEL 5: Perceptual input data modelled with RW and response model modelled with sigmoid
-
-rw_binary_config = tapas_rw_binary_config();
+%% MODEL 3: Perceptual input data modelled with HGF and response modelled with Sigmoid.
+%% hyperparameter omsa set to [NaN 1 4]
+hgf_binary_config = tapas_hgf_binary_config();
 unitsq_sgm_config = tapas_unitsq_sgm_config();
+
 optim_config = tapas_quasinewton_optim_config();
 
-est.model{5} = tapas_fitModel(y, u, rw_binary_config, unitsq_sgm_config, optim_config);
+% hyper parameter tuning.
 
-
+try
+    est.model{3}  = tapas_fitModel(y, u, hgf_binary_config, unitsq_sgm_config, optim_config);
+catch
+    disp("HGF didn't work");
+    est.model{3} = NaN;
+end
 
 % Plot results to video frame
-
 tapas_ehgf_binary_plotTraj(est.model{1});
 
 hold on;
@@ -126,7 +118,7 @@ ylabel("Seq 1 prob.");
 plot(1:180, probabilities);
 yyaxis right;
 ylabel("Expectation param");
-plot(1:180, est.model{5}.traj.v(:, 1), "color", "red");
+plot(1:180, est.model{1}.traj.v(:, 1), "color", "red");
 hold off;
 subplot(3, 1, 2);
 ylabel("mean keystroke timing");
@@ -134,6 +126,6 @@ plot(1:180, timings);
 subplot(3, 1, 3);
 xlabel("trial #");
 ylabel("learning rate");
-plot(1:180, est.model{5}.traj.vhat(:,1));
+plot(1:180, est.model{1}.traj.v(:,1));
 
 hold off;

@@ -54,7 +54,6 @@ for i = 1:numel(fileArray)
 end
 
 %normalisation phase
-youngSum2 = youngSum;
 youngSum = youngSum(abs(youngSum-mean(youngSum)) < abs(2*std(youngSum)));
 oldSum = oldSum(abs(oldSum-mean(oldSum)) < abs(2*std(oldSum)));
 pdSum = pdSum(abs(pdSum-mean(pdSum)) < abs(2*std(pdSum)));
@@ -66,7 +65,7 @@ groups = categorical(["Young", "Old", "PD"]);
 groups = reordercats(groups, ["Young", "Old", "PD"]);
 bar(groups, resArray);
 ylabel("Score");
-title("Fig 5: Mean scores achieved during learning task");
+title("Mean scores achieved during learning task");
 
 hold on;
 errorbar(1, resArray(1), erhigh(1), "linestyle", "none");

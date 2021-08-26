@@ -1,5 +1,5 @@
 function resultTable = ParseFile(basepath, fName)
-    %Reads off the 
+    %Reads off the json and parses it into a matlab table.
 
     tokens = regexp(string(fName), "^Complete-(R_\w+)-2021-(\d\d)-(\d\d)T(\d\d)_(\d\d)_(\d\d)_\d\d\dZ\.json$", "tokens", "ignorecase");
     expandedTokens = tokens{1, 1};
@@ -40,6 +40,7 @@ function resultTable = ParseFile(basepath, fName)
         else
             sequence = 0;
         end
+        
         if (eventEntry.type == "winRound")
             if (sequence == 1)
                 win1 = 1;
@@ -56,7 +57,7 @@ function resultTable = ParseFile(basepath, fName)
             win1 = NaN;
             sequence = NaN;
         end
-        meaniki = timingsArray(eventEntry.trial);
+        meaniki = timingsArray(eventEntry.trial-1);
         
         row = struct("participant", responseID, ...
             "screen", eventEntry.round, ...

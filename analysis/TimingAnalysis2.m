@@ -56,18 +56,18 @@ for i = 1:numel(fileArray)
 end
 
 % normalisation phase
-youngSum = youngSum(youngSum < 4*std(youngSum));
-oldSum = oldSum(oldSum < 4*std(oldSum));
-pdSum = pdSum(pdSum < 4*std(pdSum));
+youngSum2 = youngSum(youngSum < 4*std(youngSum));
+oldSum2 = oldSum(oldSum < 4*std(oldSum));
+pdSum2 = pdSum(pdSum < 4*std(pdSum));
 
 
-resArray = [mean(youngSum) mean(oldSum) mean(pdSum)];
-erhigh = [2*std(youngSum) 2*std(oldSum) 2*std(oldSum)];
+resArray = [mean(youngSum2) mean(oldSum2) mean(pdSum2)];
+erhigh = [2*std(youngSum2) 2*std(oldSum2) 2*std(oldSum2)];
 groups = categorical(["Young", "Old", "PD"]);
 groups = reordercats(groups, ["Young", "Old", "PD"]);
 bar(groups, resArray, 'cyan');
 ylabel("total time / ms");
-title("Fig 6: Mean interstroke timings for learning task");
+title("Mean interstroke timings for learning task");
 
 hold on;
 errorbar(1, resArray(1), erhigh(1), "linestyle", "none");

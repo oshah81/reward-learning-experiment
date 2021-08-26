@@ -3,7 +3,8 @@ function timingsArray = GetTimingsArray(eventLog)
 % eventLog JSON
 %
 % The return value is a timingsArray of 180 elements (one per round), each
-% containing 
+% containing each of the 
+% The firstkey indicates what the sequence was, as determined by the 
 
     currentTimestampBucket = zeros(4,1);
     currentBucketIndex = 1;
@@ -16,13 +17,14 @@ function timingsArray = GetTimingsArray(eventLog)
         end
         
         if (entry.type == "keydown")
+            rawTime = round(entry.time/2)*2;
             if (~isnan(lastTimestamp))
-                currentTimestampBucket(currentBucketIndex) = entry.time - lastTimestamp;
+                currentTimestampBucket(currentBucketIndex) = rawTime - lastTimestamp;
                 currentBucketIndex = currentBucketIndex + 1;
             end
-            lastTimestamp = entry.time;
+            lastTimestamp = rawTime;
         elseif (entry.type == "startNextRound")
-            round = entry.trial;
+            roundNo = entry.trial;
             if (currentBucketIndex == 1)
                 if numel(timingsArray) == 0
                     continue
@@ -31,7 +33,7 @@ function timingsArray = GetTimingsArray(eventLog)
             else
                 row = mean(currentTimestampBucket);
             end
-            timingsArray(round) = row;
+            timingsArray(roundNo - 1) = row;
             currentTimestampBucket = zeros(4,1);
             lastTimestamp = NaN;
             currentBucketIndex = 1;

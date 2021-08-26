@@ -65,7 +65,7 @@ groups = reordercats(groups, ["Young", "Old", "PD"]);
 bar(groups, resArray, 'red');
 ylabel("errors + timeouts");
 ylim([0 50]);
-title("Fig 7: Errors made during the learning task");
+title("Errors made during the learning task");
 
 
 hold on;
