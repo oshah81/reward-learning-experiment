@@ -1,0 +1,117 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Player Piano</title>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+	<style>
+		@font-face { font-family: 'source sans pro'; font-style: normal; font-weight: 400; font-display: auto; src: local('Source Sans Pro'), url('source-sans-pro-v14-latin-regular.woff2') format('woff2'); unicode-range: U+000-5FF; }
+
+		body { font-family: 'source sans pro'; }
+
+		.container { display: grid; grid-template-areas: "header" "main" "footer"; grid-template-rows: 40px 1fr 4em; row-gap: 1em; }
+
+		@media only and screen (min-width: 1024px) {
+			.container { height: 95vh; }
+		}
+
+		a { color: #6194ff; }
+
+		.container > header { grid-area: header; }
+		.container > main { grid-area: main; }
+		.container > footer { grid-area: footer; }
+		main > section { width: 80ch; }
+		summary { text-decoration: underline; color: #6194ff; cursor: pointer; }
+
+		pre { font-family: Consolas, Courier; width: 160ch; padding: 1em; background-color: #eeeeee; }
+
+		.resultDiv { border-radius: 10px; border-color: #296eff; border-width: 1px; border-style: solid; padding: 2em; width: 80ch; min-height: 3em; }
+		footer a { padding-right: 2em; }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>Tutorial 3: Handling input device events</h1>
+		</header>
+
+		<main>
+			<section>
+				In this section, we will explain how to bind keyboard handlers to the <code>&lt;piano-player&gt;</code> element created in the previous tutorial,
+				and deal with multiple instances.
+			</section>
+			<hr />
+
+			<section>
+				<h2>1.</h2>
+				<span>Here is the <code>piano-player</code> from before:</span>
+				<pre>&lt;piano-player notes="kgjh">&lt;/piano-player></pre>
+			</section>
+			<hr />
+
+
+			<section>
+				<h2>2.</h2>
+				<span>Keyboard events are handled at the document level through the <code>keydown</code> and <code>keyup</code> handlers.</span>
+				<pre>document.addEventListener("keydown", evt => keyboardManager(evt));
+document.addEventListener("keyup", evt = > keyUpManager(evt))
+
+function keyboardManager(evt /* KeyboardEvent */) {
+	// evt.key names the key that was pressed
+
+	if (!performSanityChecks(evt)) {
+		// sanity checks include checking for held down keypresses, a piano is on screen, ignoring Fn/ctrl/shift/punctuation keystrokes
+		// (any keystrokes that aren't from the first or second rows), normalising capslocks.
+		return;
+	}
+
+	// Select the first visible &lt;piano-player>
+	const activePiano = document.querySelector(":not([hidden]) piano-player");
+	if (!activePiano) {
+		return;
+	}
+
+	// Call its keynote pressed function.
+	activePiano.keyNotePressed(evt, evt.key);
+}
+				</pre>
+			</section>
+			<hr />
+
+			<section>
+				<h2>3.</h2>
+				<span>
+					There is similar code for the keyup handler.
+				</span>
+				<pre>
+function keyUpManager(evt) {
+	const activePiano = document.querySelector(":not([hidden]) piano-player");
+	if (!activePiano) {
+		return;
+	}
+
+	// Call the unpressed function.
+	activePiano.keyNoteUnPressed(evt, evt.key);
+
+}
+				</pre>
+				<span>
+					The keyboard handler in the release code also needs to handle screen navigation, hinting, and multiple <code>piano-player</code>s.
+				</span>
+			</section>
+			<hr />
+
+			<section>
+				<h2>4.</h2>
+				<span>In the next tutorial we will go through how screen navigation works in the experiment.</span>
+			</section>
+		</main>
+		<footer>
+			<a href="Tutorial2.html">&lt; Tutorial 2</a>
+			<a href="Tutorial4.html">Tutorial 4 &gt;</a>
+		</footer>
+	</div>
+
+</body>
+</html>

@@ -1,0 +1,239 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Player Piano</title>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+	<style>
+		@font-face { font-family: 'source sans pro'; font-style: normal; font-weight: 400; font-display: auto; src: local('Source Sans Pro'), url('source-sans-pro-v14-latin-regular.woff2') format('woff2'); unicode-range: U+000-5FF; }
+
+		body { font-family: 'source sans pro'; }
+
+		.container { display: grid; grid-template-areas: "header" "main" "footer"; grid-template-rows: 40px 1fr 4em; row-gap: 1em; }
+
+		@media only and screen (min-width: 1024px) {
+			.container { height: 95vh; }
+		}
+
+		a { color: #6194ff; }
+
+		.container > header { grid-area: header; }
+		.container > main { grid-area: main; }
+		.container > footer { grid-area: footer; }
+		main > section { width: 80ch; }
+		summary { text-decoration: underline; color: #6194ff; cursor: pointer; }
+
+		pre { font-family: Consolas, Courier; width: 160ch; padding: 1em; background-color: #eeeeee; }
+
+		.resultDiv { border-radius: 10px; border-color: #296eff; border-width: 1px; border-style: solid; padding: 2em; width: 80ch; min-height: 3em; }
+		footer a { padding-right: 2em; }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>Tutorial 4: Multiple screens</h1>
+		</header>
+		<style>
+			.screen { height: 200px; width: 10ch; border: #296eff 1px solid; }
+		</style>
+
+		<main>
+			<section>
+				<p>
+					Screen navigation can be handled with <abbr title="Single Page Application">SPA</abbr> libraries such as React's
+					<a href="" target="_blank">react-step-wizard</a>, <a href="https://github.com/americanexpress/react-albus" target="_blank">Albus</a>, vue's wizard control,
+					or <a href="https://github.com/amoffat/bootstrap-application-wizard" target="_blank">Bootstrap's wizard</a>.
+				</p>
+				<p>
+					For more complex sites, it is more likely you would handle screen navigation through one of the above libraries.
+					However, this tutorial will show you how you go about creating your own screen navigation, in vanilla Javascript, without the aid of a library.
+					which is what our decision task uses.
+				</p>
+			</section>
+			<hr />
+
+			<section id="section1">
+				<h2>1.</h2>
+				<span>Suppose you have two screens, each in their own <code>div</code>:</span>
+				<pre>&lt;div class="screen">I am screen 1&lt;/div>
+&lt;div class="screen">I am screen 2&lt;/div>
+				</pre>
+				<span>Result:</span>
+				<div class="resultDiv">
+					<div class="screen">I am screen 1</div>
+					<div class="screen">I am screen 2</div>
+				</div>
+				<span>
+					To create the step-by-step screen navigator: your page needs to show screen 1 (hiding screen 2), then have a "next" button
+					which allows you to navigate to screen 2. More specifically, it needs to hide screen 1, and then unhide screen 2.
+				</span>
+			</section>
+			<hr />
+
+
+			<section id="section2">
+				<h2>2.</h2>
+				<span>
+					Here are the same divs, but with screen 2 hidden (it has the "hidden" attribute set).
+				</span>
+				<pre>&lt;div class="screen">I am screen 1&lt;/div>
+&lt;div class="screen" hidden="hidden">I am screen 2&lt;/div>
+				</pre>
+				<span>Result:</span>
+				<div class="resultDiv">
+					<div class="screen">I am screen 1</div>
+					<div class="screen" hidden="hidden">I am screen 2</div>
+				</div>
+			</section>
+			<hr />
+
+			<section id="section3">
+				<h2>3.</h2>
+				<span>
+					We now add a <code>button</code> with an <code>onclick</code> handler.
+				</span>
+				<pre>&lt;div class="screen" data-screen="1">I am screen 1&lt;/div>
+&lt;div class="screen" hidden="hidden" data-screen="2">I am screen 2&lt;/div>
+&lt;button onclick="navigateScreens(event)">Next🠲&lt;/button>
+				</pre>
+				<span>Result:</span>
+				<div class="resultDiv">
+					<div class="screen" data-screen="1">I am screen 1</div>
+					<div class="screen" hidden="hidden">I am screen 2</div>
+					<button onclick="navigateScreen1(event)">Next🠲</button>
+					<div id="instructions1"></div>
+					<script type="module">
+						function navigatScreen1(event) {
+							document.getElementById("instructions1").textContent = "In the navigateScreens() event handler you would hide screen 1 and unhide screen 2.";
+						}
+					</script>
+				</div>
+			</section>
+			<hr />
+
+			<section id="section4">
+				<h2>4.</h2>
+				<span>In the event handler, we would hide screen 1 and show screen 2.</span>
+				<pre>function navigateScreens(event) {
+	document.querySelector("[data-screen=1]").hidden = true;
+	document.querySelector("[data-screen=2]").hidden = false;
+}
+</pre>
+				<div class="resultDiv">
+					<div class="screen">I am screen 1</div>
+					<div class="screen" hidden="hidden">I am screen 2</div>
+					<button onclick="navigateScreen2(event)">Next🠲</button>
+					<div id="instructions1"></div>
+					<script type="module">
+						function navigatScreen2(event) {
+							document.querySelector("#section4 [data-screen=1]").hidden = true;
+							document.querySelector("#section4 [data-screen=2]").hidden = false;
+						}
+					</script>
+				</div>
+			</section>
+			<hr />
+
+			<section id="section5">
+				<h2>5.</h2>
+				<span>When we have more than two screens, we hide all other screeens, then unhide the screen we want to show.</span>
+				<pre>function navigatScreens(event) {
+let currentScreen = 1;
+function navigateScreens(event) {
+	currentScreen += 1;
+	for (const elem of document.querySelectorAll(".screen")) {
+		elem.hidden = true;
+	}
+	document.querySelector(`.screen[data-screen=${currentScreen}]`).hidden = false;
+}
+</pre>
+				<div class="resultDiv">
+					<div class="screen">I am screen 1</div>
+					<div class="screen" hidden="hidden">I am screen 2</div>
+					<div class="screen" hidden="hidden">I am screen 3</div>
+					<div class="screen" hidden="hidden">I am screen 4</div>
+					<button onclick="navigateScreen3(event)">Next🠲</button>
+					<div id="instructions1"></div>
+					<script type="module">
+						let currentScreen = 1;
+						function navigateScreen3(event) {
+							currentScreen += 1;
+							for (const elem of document.querySelectorAll("#section5 .screen")) {
+								elem.hidden = true;
+							}
+							document.querySelector(`#section5 .screen[data-screen=${currentScreen}]`).hidden = false;
+						}
+					</script>
+				</div>
+				<span>In general, your event handler should a) decide screen needs to be shown, b) hide all other screens, c) unhide the remaining screen, and that gives you a navigation.</span>
+			</section>
+			<hr />
+
+			<section id="section6">
+				<h2>6.</h2>
+				<span>
+					Some screens require us to execute some custom code whenever they are shown (e.g. to read the output from the preiovus screen or play a sequence for the training screens).
+					This is implemented through a bunch of if statements, nothing fancy.
+				</span>
+				<!--<details>
+			<summary>Why <code>visibilitychanged</code> event handlers aren't used&gt;</summary>
+			<p>You may argue why don't we hook into the visibilitychanged event handlers for each div element and remove all those <code>if</code> statements?</p>
+			<p>Firstly, there doesn't exist a visibilitychanged event handler (although we could emulate the functionality either through a custom event or an <code>IntersectionObserver</code>).</p>
+			<p>It is also arguable that custom event handlers makes things more readable. Each function call is the same as a longjmp, which is a GOTO in disguise.</p>
+		</details>-->
+				<pre>let currentScreen = 1;
+function navigateScreens(event) {
+	currentScreen += 1;
+	for (const elem of document.querySelectorAll(".screen")) {
+		elem.hidden = true;
+	}
+	document.querySelector(`.screen[data-screen=${currentScreen}]`).hidden = false;
+	if (currentScreen === 3) {
+		document.querySelector(".screen[data-screen=3] .dynamic-text").textContent = "Set via the event handler";
+	}
+}</pre>
+				<div class="resultDiv">
+					<div class="screen">I am screen 1</div>
+					<div class="screen" hidden="hidden">I am screen 2</div>
+					<div class="screen" hidden="hidden">
+						I am screen 3
+						<span class="dynamic-text">Dynamic text</span>
+					</div>
+					<div class="screen" hidden="hidden">I am screen 4</div>
+					<button onclick="navigateScreen3(event)">Next🠲</button>
+					<div id="instructions1"></div>
+					<script type="module">
+						let currentScreen = 1;
+						function navigateScreens(event) {
+							currentScreen += 1;
+							for (const elem of document.querySelectorAll(".screen")) {
+								elem.hidden = true;
+							}
+							document.querySelector(`.screen[data-screen=${currentScreen}]`).hidden = false;
+							if (currentScreen === 3) {
+								document.querySelector(".screen[data-screen=3] .dynamic-text").textContent = "Set via the event handler";
+							}
+						}
+					</script>
+				</div>
+				<span>The general rule is still a) decide, b) hide other screens, c) unhide remaining screen, d) initialise screen.</span>
+			</section>
+			<hr />
+
+			<section id="section6">
+				<h2>6.</h2>
+				<span>The final tutorial shows the completed decision task, with state management disabled.</span>
+			</section>
+			<hr />
+
+		</main>
+		<footer>
+			<a href="Tutorial3.html">&lt; Tutorial 3</a>
+			<a href="Tutorial5.html">Tutorial 5 &gt;</a>
+		</footer>
+	</div>
+
+</body>
+</html>

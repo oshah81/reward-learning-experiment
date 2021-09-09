@@ -1,0 +1,312 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Player Piano</title>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+	<link rel="preload" href="site.css" as="style" />
+	<link rel="preload" href="source-sans-pro-v14-latin-regular.woff2" as="font" crossorigin="anonymous" />
+	<link rel="preload" href="piano-player.css" as="style" />
+
+	<link rel="preload" href="piano.json" as="fetch" crossorigin="anonymous" />
+
+	<link rel="stylesheet" href="site.css" type="text/css" />
+	<script type="module">
+		import ConfigManager from "./config-manager.js";
+		globalThis.pageConfig = new ConfigManager();
+		globalThis.eventLog = globalThis.pageConfig.setup.eventLog;
+	</script>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>Tutorial 5: Putting it all together</h1>
+			<span>
+				This page shows the final piano player task. The differences between qualtrics.js and this file is that the UI in the final decision task is built completely in javascript,
+				whereas this page is simpler because the javascript is split into multiple files and the HTML is not built dynamically.
+			</span>
+		</header>
+		<hr />
+
+		<main>
+			<div class="core-experiment">
+				<aside class="settingsBar">
+					<label>
+						Volume:
+						<input type="range" min="0.0" max="1.0" step="0.01" value="0.5" name="volume" />
+					</label>
+				</aside>
+				<div class="core-container">
+					<section class="page-1">
+						<h1>Training phase</h1>
+					</section>
+					<section class="page-2" hidden="hidden">
+						<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
+						<p>Place the index, middle, ring, little fingers of your right hand on keyboard keys g-h-j-k. Warm up by pressing the keys up and down in any order, but not simultaneously. Pay attention to the little finger, it should also comfortably press the corresponding key (k). Make sure you hear the tone of each key, at a comfortable sound level. Adjust the volume if you don’t hear the tones.</p>
+						<iframe width="640" height="384" src="https://www.youtube.com/embed/kIyEu2Sb8_A?playlist=kIyEu2Sb8_A&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allowfullscreen></iframe>
+					</section>
+					<section class="page-3" hidden="hidden">
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Red button" style="width: 150px; height; 150px; float: right; padding-bottom: 1em;" />
+						<p>Now you are going to practice sequence 1, represented by this image:</p>
+						<p>Sequence 1 consists of four key presses, in this order:</p>
+						<h2 class="sequence-display">g – j – h – k</h2>
+						<p>(that is, index – ring – middle – little finger)</p>
+						<p><iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allowfullscreen></iframe></p>
+					</section>
+
+					<section class="page-4" hidden="hidden">
+						<piano-player notes="gjhk" pace="0.5" volumecontrol="0.5"></piano-player>
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Red button" style="width: 150px; height; 150px; float: right;" />
+						<p>Sequence 1 consists of four key presses, in this order:</p>
+						<h2 class="sequence-display">g – j – h – k</h2>
+						<p>(that is, index – ring – middle – little finger)</p>
+						<p>Try it out at a comfortable speed, you can practice it slowly now, to make sure the order is clear.</p>
+						<p>Take a little break of 1-2 seconds between each performance of the sequence. You can practice it up to 10 times.</p>
+						<span id="steppedGame">Press the 'q' key to have the computer remind you of the sequence</span>
+						<p>
+							<iframe width="640" height="384" src="https://www.youtube.com/embed/CP41P5YggME?playlist=CP41P5YggME&controls=0&disablekb=1&loop=1&modestbranding=1&iv_load_policy=3" frameborder="0" allowfullscreen></iframe>
+						</p>
+					</section>
+
+					<section class="page-5" hidden="hidden">
+						<p>Was it enough practice? Can you remember the sequence?</p>
+						<p>&nbsp;</p>
+						<p>&nbsp;</p>
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Red button" style="width: 150px; height; 150px;" />
+					</section>
+
+					<section class="page-6" hidden="hidden">
+						<piano-player notes="gjhk" pace="0.5" volumecontrol="0.5"></piano-player>
+						<p class="statusLbl">Try it out! Play it once at a time and wait for the computer to tell you whether it is correct.</p>
+						<p>Hint: It starts with the right index pressing keyboard letter g.</p>
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Red button" style="width: 150px; height; 150px;" />
+					</section>
+
+					<section class="page-7" hidden="hidden">
+						<p>Now you are going to practice sequence 2, represented by this image:</p>
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Blue button" style="width: 150px; height; 150px;" />
+					</section>
+
+					<section class="page-8" hidden="hidden">
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Blue button" style="width: 150px; height; 150px; float: right; padding-bottom: 1em;" />
+						<p>Sequence 2 consists of four key presses, in this order:</p>
+						<h2 class="sequence-display">k – g – j – h</h2>
+						<p>(that is, little - index – ring – middle finger)</p>
+					</section>
+
+					<section class="page-9" hidden="hidden">
+						<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Blue button" style="width: 150px; height; 150px; float: right; padding-bottom: 1em;" />
+						<p>Sequence 2 consists of four key presses, in this order:</p>
+						<h2 class="sequence-display">k – g – j – h</h2>
+						<p>(that is, little - index – ring – middle finger)</p>
+						<p>Try it out at a comfortable speed, you can practice it slowly now, to make sure the order is clear.</p>
+						<p>Take a little break of 1-2 seconds between each performance of the sequence. You can practice it up to 10 times.</p>
+						<span id="steppedGame">Press the 'q' key to have the computer remind you of the sequence</span>
+					</section>
+
+					<section class="page-10" hidden="hidden">
+						<p>Was it enough practice? Can you remember the sequence?</p>
+						<p>&nbsp;</p>
+						<p>&nbsp;</p>
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Blue button" style="width: 150px; height; 150px;" />
+					</section>
+
+					<section class="page-11" hidden="hidden">
+						<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
+						<p class="statusLbl">Try it out! Play it once at a time and wait for the computer to tell you whether it is correct.</p>
+						<p>Hint: It starts with the right index pressing keyboard letter k.</p>
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Blue button" style="width: 150px; height; 150px;" />
+					</section>
+
+					<section class="page-12" hidden="hidden">
+						<p>The training phase is over. Let's start with the real experiment.</p>
+					</section>
+
+					<section class="page-13" hidden="hidden">
+						<h1>Experiment Main Phase.</h1>
+					</section>
+
+					<section class="page-14" hidden="hidden">
+						<h1>Experiment Main Phase.</h1>
+						<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+						<div class="image-position">
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Red button" style="width: 150px; height; 150px;" />
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Blue button" style="width: 150px; height; 150px;" />
+						</div>
+						<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+					</section>
+
+					<section class="page-15" hidden="hidden">
+						<h1>Experiment Main Phase.</h1>
+						<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+						<div class="image-position">
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Red button" style="width: 150px; height; 150px;" />
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Blue button" style="width: 150px; height; 150px;" />
+						</div>
+						<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+						<p>
+							Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
+							obtain a reward (5 points) or not.
+						</p>
+					</section>
+
+					<section class="page-16" hidden="hidden">
+						<h1>Experiment Main Phase.</h1>
+						<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+						<div class="image-position">
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Red button" style="width: 150px; height; 150px;" />
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Blue button" style="width: 150px; height; 150px;" />
+						</div>
+						<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+						<p>
+							Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
+							obtain a reward (5 points) or not.
+						</p>
+						<p>
+							Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
+							likely give you reward!
+						</p>
+					</section>
+
+					<section class="page-17" hidden="hidden">
+						<h1>Experiment Main Phase.</h1>
+						<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+						<div class="image-position">
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" alt="Red button" style="width: 150px; height; 150px;" />
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" alt="Blue button" style="width: 150px; height; 150px;" />
+						</div>
+						<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+						<p>
+							Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
+							obtain a reward (5 points) or not.
+						</p>
+						<p>
+							Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
+							likely give you reward!
+						</p>
+						<p>
+							Careful though: The reward (points) associated with each sequence will change from time to time. So pay attention
+							and adapt your decisions if you think that the conditions changed.
+						</p>
+					</section>
+
+					<section class="page-18" hidden="hidden">
+						<h1>Experiment Main Phase.</h1>
+						<p>Now you will see the images representing sequence 1 and sequence 2 on the screen.</p>
+						<div class="image-position">
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" class="clickable" alt="Red button" style="width: 150px; height; 150px;" data-page="1" />
+							<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" class="clickable" alt="Blue button" style="width: 150px; height; 150px;" data-page="2" />
+						</div>
+						<p>Each time you see both, you have to decide whether you play sequence 1 or sequence 2.</p>
+						<p>
+							Then you will simply play the sequence you choose on that attempt. Once you play the sequence, you will see whether you
+							obtain a reward (5 points) or not.
+						</p>
+						<p>
+							Your aim is to obtain as many points as possible at the end of this study, so play the sequence you think will more
+							likely give you reward!
+						</p>
+						<p>
+							Careful though: The reward (points) associated with each sequence will change from time to time. So pay attention
+							and adapt your decisions if you think that the conditions changed.
+						</p>
+						<p>Now</p>
+						<p>Start playing sequence 1 (hint: it starts with a &quot;g&quot;).</p>
+						<p>Or</p>
+						<p>Start playing sequence 2 (hint: it starts with a &quot;k&quot;).</p>
+					</section>
+
+					<section class="page-19" hidden="hidden">
+						<piano-player notes="kgjh" pace="0.5" volumecontrol="0.5"></piano-player>
+						<countdown-clock width="100" time="5.0"></countdown-clock>
+						<p class="statusLbl">Play sequence.</p>
+						<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" class="active-icon" alt="Blue button" style="width: 150px; height; 150px;" />
+					</section>
+
+					<section class="page-20" hidden="hidden">
+						<h2 class="statusLbl incorrect-msg">You earned 0 points.</h2>
+						<p class="hint-text" hidden="hidden"></p>
+					</section>
+
+					<section class="page-21" hidden="hidden">
+						<h2 class="statusLbl correct-msg">You earned 5 points!</h2>
+					</section>
+
+					<section class="page-22" hidden="hidden">
+						<h2 class="statusLbl incorrect-msg">You ran out of time to play the sequence, and lost the points.</h2>
+					</section>
+
+					<section class="page-23" hidden="hidden">
+						<h2>+</h2>
+					</section>
+
+					<section class="page-24" hidden="hidden">
+						<p class="scoreboard">Your score: </p>
+						<h1>Sequence 1 or Sequence 2?</h1>
+						<div class="image-position">
+							<figure>
+								<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021" class="clickable" alt="Red button" style="width: 150px; height; 150px;" data-page="1" />
+								<figcaption>(hint: it starts with a &quot;g&quot;)</figcaption>
+							</figure>
+							<figure>
+								<img src="https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058" class="clickable" alt="Blue button" style="width: 150px; height; 150px;" data-page="2" />
+								<figcaption>(hint: it starts with a &quot;k&quot;)</figcaption>
+							</figure>
+						</div>
+						<p class="hint-text" hidden="hidden"></p>
+					</section>
+				</div>
+				<div id="splash" hidden="hidden"><countdown-clock width="500" time="0.5"></countdown-clock></div>
+				<aside class="gold-footer">
+					<button id="nxtbtn" class="pd_button" onclick="globalThis.onNextPage(event)">Click here to continue</button>
+				</aside>
+			</div>
+		</main>
+		<footer>
+		</footer>
+	</div>
+	<datalist id="volumesDrop">
+		<option value="0.0" label="Mute">
+		<option value="1.0" label="100%">
+	</datalist>
+	<div id="splash" hidden="hidden"><countdown-clock width="500" time="0.5"></countdown-clock></div>
+
+	<script type="module">
+		import { setupVolumeControl, setupIcons, keyUpManager, keyDownManager, navigateToPage } from "./js/script-helpers.js";
+
+		setupVolumeControl();
+		setupIcons();
+		document.addEventListener("keydown", async evt => await keyDownManager(evt, evt.key));
+		document.addEventListener("keyup", async evt => await keyUpManager(evt, evt.key));
+
+		globalThis.onNextPage = async event => {
+			let round = globalThis.pageConfig.setup.round;
+			if (round === 24) {
+				round = 18;
+			} else if (round === 20 || round === 21 || round === 22) {
+				round = 23;
+			} else {
+				round++;
+			}
+			globalThis.pageConfig.setup.round = round;
+			await navigateToPage(event);
+		};
+
+	</script>
+	<script type="module">
+		import PianoPlayerElement from "./js/piano-player.js";
+		import CountDownClockElement from "./js/countdown-clock.js";
+
+		customElements.define("piano-player", PianoPlayerElement);
+		customElements.define("countdown-clock", CountDownClockElement);
+	</script>
+	<script type="module">
+		import { navigateToPage, timeoutManager } from "./js/script-helpers.js";
+
+		document.querySelector(".page-19 > countdown-clock").addEventListener("timeout", async evt => await timeoutManager(evt));
+		navigateToPage();
+	</script>
+</body>
+</html>

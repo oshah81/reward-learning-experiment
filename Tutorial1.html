@@ -1,0 +1,422 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Player Piano</title>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+	<style>
+		@font-face { font-family: 'source sans pro'; font-style: normal; font-weight: 400; font-display: auto; src: local('Source Sans Pro'), url('source-sans-pro-v14-latin-regular.woff2') format('woff2'); unicode-range: U+000-5FF; }
+
+		body { font-family: 'source sans pro'; }
+
+		.container { display: grid; grid-template-areas: "header" "main" "footer"; grid-template-rows: 40px 1fr 4em; row-gap: 1em; }
+
+		@media only and screen (min-width: 1024px) {
+			.container { height: 95vh; }
+		}
+
+		a { color: #6194ff; }
+
+		.container > header { grid-area: header; }
+		.container > main { grid-area: main; }
+		.container > footer { grid-area: footer; }
+		main > section { width: 80ch; }
+		summary { text-decoration: underline; color: #6194ff; cursor: pointer; }
+
+		pre { font-family: Consolas, Courier; width: 160ch; padding: 1em; background-color: #eeeeee; }
+
+		.resultDiv { border-radius: 10px; border-color: #296eff; border-width: 1px; border-style: solid; padding: 2em; width: 80ch; min-height: 3em;}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>Tutorial 1: Quick recap of Javascript concepts</h1>
+		</header>
+
+		<main>
+			<section>
+				The first tutorial is intended as a gentle introduction to the Javascript code utilised in the Piano player, intended as a quick recap for writing JavaScript code,
+				and ends with the introduction of a custom element that will form the backbone of the decision making task.
+			</section>
+			<hr />
+
+
+			<section>
+				<h2>1.</h2>
+				<span>First a quick recap on how to add a button which runs a javascript function. Add a button to the HTML:</span>
+				<pre>&lt;button>Text for the button&lt;/button>
+				</pre>
+				<span>The result looks like this:</span>
+				<div class="resultDiv">
+					<button>The text for the button</button>
+				</div>
+			</section>
+			<hr />
+
+			<section>
+
+				<span>
+					Now bind an <code>onclick</code> handler to the button. The example below adds an <code>onclick</code> handler to run the javascript
+					function <code>runFunc1</code>:
+				</span>
+				<details>
+					<summary>
+						Extra Info &gt;&gt;
+					</summary>
+					An onclick handler can also be <code>bind</code>'ed in Javascript, using <code>element.addEventListener()</code> on the element. However, binding the
+					<code>onclick</code> handler via the HTML attribute is more common and what is used in the main decision making task.
+				</details>
+				<pre>&lt;button onclick="runFunc1()">Text for the button&lt;/button>
+&lt;div id="target_element">This text will change on click&lt;/div>
+&lt;script type="module">
+function runFunc1() {
+	document.getElementById("target_element").innerHTML = "We ran the code and this text changed as a result.";
+}
+&lt;/script></pre>
+
+				<span>
+					The result looks like this:
+				</span>
+				<div class="resultDiv">
+					<script>
+						function runFunc1() {
+							document.getElementById("target_element").innerHTML = "We ran the code and this text changed as a result.";
+						}
+					</script>
+					<button onclick="runFunc1()">Text for the button</button>
+					<div id="target_element">This text will change on click</div>
+					<script>
+
+						function resetAll() {
+							document.getElementById("target_element").textContent = "This text will change on click";
+							document.querySelector("#divElement").textContent = "I am a clickable div";
+							document.querySelector(".answerDiv").textContent = "";
+						}
+
+					</script>
+				</div>
+				<button onclick="resetAll()">Reset</button>
+			</section>
+			<hr />
+
+			<section>
+				<h2>2.</h2>
+				<span>The onclick handler is not just for buttons. It works for other HTML elements as well.</span>
+				<style>
+					.rainbow-style { --angle: 0deg; border: 3px solid; border-image: conic-gradient(from var(--angle), red, yellow, lime, aqua, blue, magenta, red) 1; }
+				</style>
+				<pre>&lt;div id="divElement" onclick="readProperty()" class="rainbow-style">I am a clickable div&lt;/div>
+&lt;script>
+	function readProperty() {
+		document.querySelector("#divElement").innerHTML = "I was clicked.";
+	}
+&lt;/script></pre>
+				<span>Result:</span>
+				<div class="resultDiv">
+					<div id="divElement" onclick="readElement1()" title="Tooltip 2" class="rainbow-style">I am a clickable div</div>
+					<script>
+						function readElement1() {
+							document.querySelector("#divElement").innerHTML = "I was clicked.";
+						}
+					</script>
+
+				</div>
+				<button onclick="resetAll()">Reset</button>
+			</section>
+			<hr />
+
+			<section>
+				<h2>3.</h2>
+				<span>
+					The onclick handler accepts an event parameter, which allows you to access attributes and properties of the button being clicked.
+					This is useful if you want the same handler to work on multiple buttons
+				</span>
+				<pre>
+&lt;button onclick="readProperty(event)" id="btn1">First button&lt;/button>
+&lt;button onclick="readProperty(event)" id="btn2">Second button&lt;/button>
+&lt;script>
+	function readProperty(event) {
+		// Use event.target to access the element being clicked.
+		if (event.target.id === "btn1") {
+			this.innerHTML = "I, btn1 was clicked";
+		} else {
+			this.innerHTML = "I, btn2 was clicked";
+		}
+	}
+&lt;/script>
+				</pre>
+				<span>Result:</span>
+				<div class="resultDiv">
+					<button onclick="readProperty(event)" id="btn1">First button</button>
+					<button onclick="readProperty(event)" id="btn2">Second button</button>
+					<div class="answerDiv"></div>
+					<script>
+						function readProperty(event) {
+							// Use event.target to access the element being clicked.
+							if (event.target.id === "btn1") {
+								document.querySelector(".answerDiv").innerHTML = "First button was clicked";
+							} else {
+								document.querySelector(".answerDiv").innerHTML = "Second button was clicked";
+							}
+						}
+					</script>
+				</div>
+				<button onclick="resetAll()">Reset</button>
+			</section>
+			<hr />
+
+			<section>
+				<h2>4.</h2>
+				<span>
+					Auxilliary data can be stored in the element's
+					<a href="https://developer.mozilla.org/en-US/docs/Learn/HTML/Howto/Use_data_attributes" target="_blank">custom attributes</a>:
+				</span>
+				<details>
+					<summary>Extra Info &gt;&gt;</summary>
+					Each HTML element can hold multiple data attributes, such as the note being played, the corresponding key on the keyboard, and/or the frequency value of that note.
+				</details>
+				<pre>
+&lt;button data-notename="D#" onclick="onKeyPress(event)">D# key&lt;/button>
+&lt;button data-notename="F#" onclick="onKeyPress(event)">F# key&lt;/button>
+&lt;script>
+	function onKeyPress(event) {
+		// data- attributes can be retrieved from the dataset property.
+		const nameOfKey = event.target.dataset.notename;
+		// Backticks denote interpolated strings, the javascript equivalent of Python's F-strings.
+		alert(`The ${nameOfKey} key was pressed`);
+	}
+&lt;/script>
+				</pre>
+				<span>Result:</span>
+				<div class="resultDiv">
+					<button data-notename="D#" onclick="onKeyPress(event)">D# key</button>
+					<button data-notename="F#" onclick="onKeyPress(event)">F# key</button>
+					<script>
+						function onKeyPress(event) {
+							alert(`The ${event.target.dataset.notename} key was pressed`);
+						}
+					</script>
+				</div>
+			</section>
+			<hr />
+
+			<section>
+				<h2>5.</h2>
+				<span>Finally, with a bit of CSS styling, we can make the button look like a hyperlink</span>
+				<pre>
+&lt;style>
+	.link-like-button { border: none; background-color: transparent; color: #6194ff; cursor: pointer; text-decoration: underline; }
+	.link-like-button:hover { text-decoration: none; }
+&lt;/style>
+&lt;button class="link-like-button" onclick="linkClick(event)">First button&lt;/button>
+&lt;script>
+	function linkClick(event) {
+		alert("You can then code a redirect to the next page.");
+	}
+&lt;/script>
+				</pre>
+				<span>Result:</span>
+				<div class="resultDiv">
+					<style>
+						.link-like-button { border: none; background-color: transparent; color: #6194ff; cursor: pointer; text-decoration: underline; }
+							.link-like-button:hover { text-decoration: none; }
+					</style>
+					<button class="link-like-button" onclick="linkClick(event)">First button</button>
+					<script>
+						function linkClick(event) {
+							alert("You can then code a redirect to the next page.");
+						}
+					</script>
+				</div>
+			</section>
+			<hr />
+
+			<section>
+				<span>Or a piano key.</span>
+				<pre>
+&lt;style>
+	button.piano-key {
+		height: 225px;
+		width: 45px;
+		padding: 0;
+		margin-left: -5px;
+		border: 1px solid #404040;
+		background-color: ivory;
+		display: inline-grid;
+		place-content: end center;
+	}
+	button.piano-key:hover { background-color: #ddd5e8; }
+	button.piano-key:active { background-color: #dbceee; }
+&lt;/style>
+&lt;div id="soundApiLog">&nbsp;&lt;/div>
+&lt;button class="piano-key" data-freq="987.8" onclick="playKey(event)">B Key&lt;/button>
+&lt;button class="piano-key" data-freq="1046.5" onclick="playKey(event)">C Key&lt;/button>
+&lt;script>
+
+	// This is a mock class for a sound API. A more advanced instance could interface to play an mp3 file or use the Web Audio API
+	// (used in the main decision making task)
+	class SoundApi {
+		constructor() {
+		}
+		play(frequency) {
+			document.querySelector("#soundApiLog").textContent = `Command to play tone at ${frequency}Hz`;
+		}
+	}
+
+	let soundApi1 = new SoundApi();
+	function playKey(event) {
+		const frequencyToPlay = parseFloat(event.target.dataset.freq);
+		soundApi1.play(frequencyToPlay);
+	}
+&lt;/script>
+				</pre>
+				<span>Result:</span>
+				<div class="resultDiv">
+					<style>
+						button.piano-key { height: 225px; width: 45px; padding: 0; margin-left: -5px; border: 1px solid #404040; background-color: ivory; display: inline-grid; place-content: end center; }
+							button.piano-key:hover { background-color: #ddd5e8; }
+							button.piano-key:active { background-color: #dbceee; }
+					</style>
+					<div id="soundApiLog">&nbsp;</div>
+					<button class="piano-key" data-freq="493.88" onclick="playKey(event)">B Key</button>
+					<button class="piano-key" data-freq="523.25" onclick="playKey(event)">C Key</button>
+					<script>
+
+						// This is a mock class for a sound API. A more advanced instance could interface to play an mp3 file or use the Web Audio API
+						// (used in the main decision making task)
+						class SoundApi1 {
+							constructor() {
+							}
+							play(frequency) {
+								document.querySelector("#soundApiLog").textContent = `Command to play tone at ${frequency}Hz`;
+							}
+						}
+
+						let soundApi1 = new SoundApi1();
+						function playKey(event) {
+							const frequencyToPlay = parseFloat(event.target.dataset.freq);
+							soundApi1.play(frequencyToPlay);
+						}
+					</script>
+				</div>
+			</section>
+			<hr />
+
+			<section>
+				<h2>6.</h2>
+				<span>Here we extend the previous example to use the Web Audio API instead of a mock sound class, so a real musical tone is played.</span>
+				<div class="resultDiv">
+					<button class="piano-key" data-freq="493.88" onclick="playAudio(event)">B</button>
+					<button class="piano-key" data-freq="523.25" onclick="playAudio(event)">C</button>
+					<script>
+
+						function iosShimHack() {
+							window.AudioContext = window.AudioContext || window.webkitAudioContext;
+							return window.AudioContext;
+						}
+
+						class AudioApi {
+							constructor() {
+								this._audioContext = null;
+								this._audioContextRefCount = 0;
+								this.volumeControl = 1.0;
+
+							}
+							play(frequency) {
+								this.playTone(frequency);
+							}
+
+							get audioContext() {
+								if (!this._audioContext) {
+									var audCT = iosShimHack();
+									this._audioContext = new audCT();
+								}
+								return this._audioContext;
+							}
+
+							playTone(freq) {
+								if (this._audioContextRefCount === 0) {
+									this._audioContextRefCount = 1;
+									const audCT = iosShimHack();
+									this._audioContext = new audCT();
+								} else {
+									this._audioContextRefCount++;
+								}
+
+								const ctt = this._audioContext;
+								const osc = ctt.createOscillator();
+
+								const decayRate = 1.5;
+								const envelope = ctt.createGain();
+
+								osc.frequency.value = parseFloat(freq);
+								osc.type = "triangle";
+								envelope.gain.value = this.volumeControl;
+
+								osc.connect(envelope);
+								envelope.connect(ctt.destination);
+
+								osc.start(ctt.currentTime);
+
+								let continuing = true;
+								let start = null;
+
+								setTimeout(() => {
+									continuing = false;
+
+									osc.stop(ctt.currentTime);
+									osc.disconnect(envelope);
+									envelope.disconnect(ctt);
+
+									if (--this._audioContextRefCount === 0) {
+										this._audioContext.close();
+										this._audioContext = null;
+									}
+								}, 2500);
+
+								const fadeOutAnim = (timestamp) => {
+									if (start === null) {
+										start = timestamp;
+									}
+									const elapsed = timestamp - start;
+
+									// apply formula vol * exp (1000rx) where r = ln(.001/vol)/2500
+
+									const r = Math.log(0.001 / this.volumeControl / 1000) / 2500.0;
+									envelope.gain.value = this.volumeControl * Math.exp(r * elapsed);
+
+									if (continuing) {
+										requestAnimationFrame(fadeOutAnim);
+									}
+								};
+
+								requestAnimationFrame(fadeOutAnim);
+							}
+						}
+
+						let soundApi = new AudioApi();
+						function playAudio(event) {
+							const frequencyToPlay = parseFloat(event.target.dataset.freq);
+							soundApi.play(frequencyToPlay);
+						}
+					</script>
+				</div>
+			</section>
+
+		</main>
+		<footer>
+			<a href="Tutorial2.html">Tutorial 2 &gt;</a>
+		</footer>
+	</div>
+
+	<script type="module">
+
+	</script>
+	<script type="module">
+	</script>
+	<script type="module">
+	</script>
+</body>
+</html>

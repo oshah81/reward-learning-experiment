@@ -1,0 +1,258 @@
+﻿<!doctype html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Player Piano</title>
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+	<style>
+		@font-face { font-family: 'source sans pro'; font-style: normal; font-weight: 400; font-display: auto; src: local('Source Sans Pro'), url('source-sans-pro-v14-latin-regular.woff2') format('woff2'); unicode-range: U+000-5FF; }
+
+		body { font-family: 'source sans pro'; }
+
+		.container { display: grid; grid-template-areas: "header" "main" "footer"; grid-template-rows: 40px 1fr 4em; row-gap: 1em; }
+
+		@media only and screen (min-width: 1024px) {
+			.container { height: 95vh; }
+		}
+
+		a { color: #6194ff; }
+
+		.container > header { grid-area: header; }
+		.container > main { grid-area: main; }
+		.container > footer { grid-area: footer; }
+		main > section { width: 80ch; }
+		summary { text-decoration: underline; color: #6194ff; cursor: pointer; }
+
+		pre { font-family: Consolas, Courier; width: 160ch; padding: 1em; background-color: #eeeeee; }
+
+		.resultDiv { border-radius: 10px; border-color: #296eff; border-width: 1px; border-style: solid; padding: 2em; width: 80ch; min-height: 3em; }
+		footer a { padding-right: 2em; }
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>Tutorial 2: Explanation of custom elements</h1>
+		</header>
+
+		<main>
+			<section>
+				In this section, we will explain custom elements, and detail the <code>&lt;piano-player&gt;</code> element's functionality.
+				A more in-depth tutorial on custom elements is available in the
+				<a href="https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements" target="_blank">Mozilla WebDoc pages</a>
+			</section>
+			<hr />
+
+			<section>
+				<h2>1.</h2>
+				<span>The full HTML for the piano player looks like this:</span>
+				<pre>
+&lt;section class="keyboard">
+	&lt;div class="black-notes">
+		&lt;button data-note="C#" data-octave="1" data-freq="277.1826309768721" data-key="r" class="key black-key" style="left: calc(((50% + 120px) - 90px) - 157.5px);">
+			r&lt;span class="mapped-to">
+				C#
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="D#" data-octave="1" data-freq="311.1269837220809" data-key="t" class="key black-key" style="left: calc(((50% + 165px) - 90px) - 157.5px);">
+			t&lt;span class="mapped-to">
+				D#
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="F#" data-octave="1" data-freq="369.9944227116344" data-key="u" class="key black-key" style="left: calc(((50% + 255px) - 90px) - 157.5px);">
+			u&lt;span class="mapped-to">
+				F#
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="G#" data-octave="1" data-freq="415.3046975799451" data-key="i" class="key black-key" style="left: calc(((50% + 300px) - 90px) - 157.5px);">
+			i&lt;span class="mapped-to">
+				G#
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="A#" data-octave="1" data-freq="466.1637615180899" data-key="o" class="key black-key" style="left: calc(((50% + 345px) - 90px) - 157.5px);">
+			o&lt;span class="mapped-to">
+				A#
+			&lt;/span>
+		&lt;/button>
+	&lt;/div>
+	&lt;div class="white-notes">
+		&lt;button data-note="C" data-octave="1" data-freq="261.6255653005986" data-key="d" class="key white-key" style="left: calc(((50% + 90px) - 90px) - 157.5px);">
+			d&lt;span class="mapped-to">
+				C
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="D" data-octave="1" data-freq="293.6647679174076" data-key="f" class="key white-key" style="left: calc(((50% + 135px) - 90px) - 157.5px);">
+			f&lt;span class="mapped-to">
+				D
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="E" data-octave="1" data-freq="329.6275569128699" data-key="g" class="key white-key" style="left: calc(((50% + 180px) - 90px) - 157.5px);">
+			g&lt;span class="mapped-to">
+				E
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="F" data-octave="1" data-freq="349.2282314330039" data-key="h" class="key white-key" style="left: calc(((50% + 225px) - 90px) - 157.5px);" data-pressed="">
+			h&lt;span class="mapped-to">
+				F
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="G" data-octave="1" data-freq="391.99543598174927" data-key="j" class="key white-key" style="left: calc(((50% + 270px) - 90px) - 157.5px);">
+			j&lt;span class="mapped-to">
+				G
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="A" data-octave="1" data-freq="440" data-key="k" class="key white-key" style="left: calc(((50% + 315px) - 90px) - 157.5px);">
+			k&lt;span class="mapped-to">
+				A
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="B" data-octave="1" data-freq="493.8833012561241" data-key="l" class="key white-key" style="left: calc(((50% + 360px) - 90px) - 157.5px);">
+			l&lt;span class="mapped-to">
+				B
+			&lt;/span>
+		&lt;/button>
+		&lt;button data-note="C" data-octave="2" data-freq="523.2511306011972" data-key=";" class="key white-key" style="left: calc(((50% + 405px) - 90px) - 157.5px);">
+			;&lt;span class="mapped-to">
+				C
+			&lt;/span>
+		&lt;/button>
+	&lt;/div>
+&lt;/section>
+				</pre>
+				<span>
+					That HTML is verbose, difficult to read/understand, and tedious to change. Even though it is
+					dynamically generated from a configuration file (piano.json), imagine how much easier it would be to work with
+					if that HTML were encapsulated in some single element you can add like the following?
+				</span>
+				<pre>
+					&lt;piano-player notes="kgjh">&lt;/piano-player>
+					<!-- The notes attribute indicates the sequence we need to play -->
+				</pre>
+				<span>This is what custom elements give us.</span>
+			</section>
+			<hr />
+
+			<section>
+				<h2>2.</h2>
+				<span>To register a custom element, you need to import its relevant script:</span>
+				<pre>&lt;script type="module" src="https://raw.githubusercontent.com/oshah81/reward-learning-experiment/js/piano-player.js">&lt;/script>
+				</pre>
+				<details>
+					<summary>Extra info &gt;&gt;</summary>
+					As an alternative to HTML-based importing, you can import a script using ES2018 import syntax:
+
+					<pre>import PianoPlayerElement from "https://raw.githubusercontent.com/oshah81/reward-learning-experiment/js/piano-player.js";</pre>
+				</details>
+				<span>Then you need to register the class with the web browser window:</span>
+				<pre>customElements.define("piano-player", PianoPlayerElement);</pre>
+				<span>You can now create a piano, by adding a piano-player element to the HTML document.</span>
+				<pre>&lt;piano-player notes="kgjh">&lt;/piano-player></pre>
+				<span>Result:</span>
+				<div class="resultDiv">
+					<script type="module">
+						import PianoPlayerElement from "./js/piano-player.js";
+
+						customElements.define("piano-player", PianoPlayerElement);
+					</script>
+					<piano-player notes="kgjh"></piano-player>
+				</div>
+				<details>
+					<summary>Extra Info &gt;&gt;</summary>
+					<span>The javascript class which underlies the <code>piano-player</code> element, PianoPlayerElement,
+					contains all the callbacks and observed attributes necessary to implement a custom element. This includes
+					the constructor override, the connected/disconnected callbacks, the (optional) observed attributes, and
+					their corresponding properties.
+					</span>
+				</details>
+			</section>
+			<hr />
+
+			<section>
+				<h2>3.</h2>
+				<span>
+					The <code>piano-player</code> element handles the playing back of musical tones, managing the web audio API,
+					the CSS styling of each key, resizing/centering concerns, and the playing back of specific sequences.
+					It also deals with issues concerning id/name conflicts, CSS scoping and local variable scoping.
+					It has the following attributes:
+				</span>
+				<table>
+					<thead>
+						<tr>
+							<th>Property</th>
+							<th>Description</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>window.eventLog</td>
+							<td>
+								Keypresses and timings are logged to an array called eventLog (this is the same format as the eventLog found in the <i>data.json</i>
+								output on the server side). Contains the keypresses made whilst this instance of the <code>piano-player</code> element was on screen.
+							</td>
+						</tr>
+						<tr>
+							<td>notes</td>
+							<td>Denotes the sequence of keys that need to be played as part of a round. This is "gjhk" in sequence 1, and "kgjh" in sequence 2.</td>
+						</tr>
+						<tr>
+							<td>volumeControl</td>
+							<td>Sets the volume of the <code>piano-player</code>.</td>
+						</tr>
+						<tr>
+							<td>pace</td>
+							<td>Configures the length of time (in seconds) that a tone plays</td>
+						</tr>
+						<tr>
+							<td>playTone(frequency)</td>
+							<td>Plays a note at the sound frequency specified by <code>frequency</code> (in Hz). The tone plays for the duration specified by <code>pace</code>.</td>
+						</tr>
+						<tr>
+							<td>keyNotePressed(event, key)</td>
+							<td>
+								This would be called by a page-wide keyboard handler (see <a href="Tutorial3.html">tutorial 3</a>) to make the piano player play a key. For example,
+								you would call this method when the 'j' key is pressed. <code>key</code> denotes the key being pressed. <code>event</code> denotes the
+								<a href="https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent" target="_blank"><code>KeyboardEvent</code></a> associated with the key press.
+							</td>
+						</tr>
+						<tr>
+							<td>keyNoteUnPressed(frequency)</td>
+							<td>
+								Used to inform the piano-player that a <code>keyup</code> (following a <code>keydown</code> event) has been fired. This instructs the piano player to
+								release the key (which reverbs after release).
+							</td>
+						</tr>
+						<tr>
+							<td>playSequence(sequence)</td>
+							<td>Plays the sequence denoted by <code>sequence</code>. This is used by the hint system to remind the user of what sequence needs to be played on-screen.</td>
+						</tr>
+					</tbody>
+				</table>
+				<span>To access these attributes, first get a reference to the custom element with <code>document.querySelector</code>, then change the
+				properties / call the appropriate methods on that reference.</span>
+			</section>
+			<hr />
+
+			<section>
+				<h2>3.</h2>
+				<span>If you managed to get this far without getting lost, congrats. You have completed the hardest of the tutorials to get up to speed understanding the codebase.
+				You may have noticed that the <code>piano-player</code> element was not responding to computer keyboard events (only mouse clicks).
+				The next tutorial will show how to bind a keyboard handler to the custom element.
+				</span>
+			</section>
+		</main>
+		<footer>
+			<a href="Tutorial1.html">&lt; Tutorial 1</a>
+			<a href="Tutorial3.html">Tutorial 3 &gt;</a>
+		</footer>
+	</div>
+
+	<script type="module">
+
+	</script>
+	<script type="module">
+	</script>
+	<script type="module">
+	</script>
+</body>
+</html>
