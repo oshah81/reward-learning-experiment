@@ -17,6 +17,10 @@ If the data folder is not located in this path, you will need to edit the first 
 
 This is a model-free analysis which compares the playback accuracy of each group. It counts the number of timedOuts and incorrectPlay rounds for each participant, and produces a bar chart which compares the mean accuracy for each of the three groups.
 
+## GenerateFigure*.m ##
+
+These files generate the figures used in the dissertation.
+
 ## GetTimingsArray.m ##
 
 This is a helper function used by all scripts to calculate the inter-keystroke interval for each round.
@@ -24,6 +28,10 @@ This is a helper function used by all scripts to calculate the inter-keystroke i
 ## HgfSums.m ## 
 
 This file extracts the learning rates for each participant.
+
+## Model*Analysis.m ##
+
+These files fit the various computational models (listed in table 3 of the dissertation) to the results in the data folder.
 
 ## ParseFile.m ##
 
@@ -35,11 +43,24 @@ This fits all computational models to a specific participant
 
 ## ResultsAnalysisMovie.m ##
 
-This creates the **.mp4 movies which plots the specified computational model to all participants
+This was unused in the final paper. You can probably ignore this file.
 
 ## ScoreAnalysis.m ##
 
 This is a model-free analysis which compares the score for each group.
+
+## ScoreAnalysisArray.m ##
+
+This is a model-free analysis which compares the score for each group.
+
+## SimulateModels.m ##
+
+This simple script executes all ModelAnalysis* files in a fire/forget manner. This is useful for an overnight run of all
+computational models
+
+## some_models.m ##
+
+This is 
 
 ## TimingAnalysis.m ##
 
