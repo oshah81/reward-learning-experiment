@@ -338,6 +338,4 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
-/analysis/Old.xlsx
-/analysis/PD.xlsx
-/analysis/Young.xlsx
+
