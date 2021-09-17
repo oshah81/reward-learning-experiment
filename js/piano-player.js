@@ -1,5 +1,5 @@
-import {wait, keyDownManager, keyUpManager} from "./script-helpers.js";
-import ConfigManager from "./config-manager.js";
+import { wait, keyDownManager, keyUpManager } from "https://oshah81.github.io/reward-learning-experiment/js/script-helpers.js";
+import ConfigManager from "https://oshah81.github.io/reward-learning-experiment/js/config-manager.js";
 
 function iosShimHack() {
 	window.AudioContext = window.AudioContext || window.webkitAudioContext;

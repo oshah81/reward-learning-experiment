@@ -45,6 +45,11 @@ This fits all computational models to a specific participant
 
 This was unused in the final paper. You can probably ignore this file.
 
+## RoundInfo.ipynb ##
+
+This Jupyter notebook allows you to regenerate the xlsx files Young.xlsx, Old.xlsx and PD.xlsx files, from an export of
+survey data from Qualtrics.
+
 ## ScoreAnalysis.m ##
 
 This is a model-free analysis which compares the score for each group.
@@ -57,10 +62,6 @@ This is a model-free analysis which compares the score for each group.
 
 This simple script executes all ModelAnalysis* files in a fire/forget manner. This is useful for an overnight run of all
 computational models
-
-## some_models.m ##
-
-This is 
 
 ## TimingAnalysis.m ##
 

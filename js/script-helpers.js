@@ -1,12 +1,10 @@
 
-const pressedKeys = new Set();
-const randomVals = generateRandomValues();
+let keyDownListener;
+let keyUpListener;
+let qualtricsContext;
 
-function generateRandomValues() {
-	let arr = new Uint16Array(100);
-	crypto.getRandomValues(arr);
-	return Array.from(arr).map(x => x/65536.0);
-}
+const pressedKeys = new Set();
+
 
 function wait(ms) {
 	return new Promise(resolve => {
@@ -23,8 +21,16 @@ function findLastIndex(array, predicate) {
 	}
 }
 
+function getLangForTask() {
+	return "${e://Field/Q_Language}".toLowerCase();
+}
+
+function getQualtricsSessionId() {
+	return "${e://Field/ResponseID}";
+}
+
 function setupVolumeControl() {
-	document.querySelector("input[name='volume']").addEventListener("input", function(evt) {
+	document.querySelector("input[name='volume']").addEventListener("input", function (evt) {
 		const volControl = event.target;
 		for (const elem of document.querySelectorAll("piano-player")) {
 			elem.volumeControl = volControl.value;
@@ -34,22 +40,19 @@ function setupVolumeControl() {
 
 function setupIcons() {
 	for (let elem of document.querySelectorAll("img.clickable")) {
-		elem.addEventListener("click", function(evt) {
+		elem.addEventListener("click", function (evt) {
 			gamePage(parseInt(evt.target.dataset.page), evt);
 		});
 	}
 }
 
 function checkProbabilityOfWin(activePiano) {
-	if (globalThis.pageConfig.setup.trial >= randomVals.length - 1) {
-		throw new Error("out of range");
-	}
+	const activeProbability = globalThis.pageConfig.probJson.probability1[globalThis.pageConfig.setup.trial - 2];
+	const unchosenProbability = globalThis.pageConfig.probJson.probability2[globalThis.pageConfig.setup.trial - 2];
 
-	const probabilityArray = globalThis.pageConfig.probJson.probabilities;
-	const activeProbability = probabilityArray[globalThis.pageConfig.setup.trial];
-	const probabilityOfWin = (activePiano.dataset.sequence == 1) ? activeProbability.score1 / (activeProbability.score1 + activeProbability.score2) :  activeProbability.score2 / (activeProbability.score1 + activeProbability.score2);
+	const mcsScore = Math.random();
 
-	return randomVals[globalThis.pageConfig.setup.trial] > probabilityOfWin;
+	return { "mcsScore": mcsScore, "activeProbability": activeProbability, "unchosenProbability": unchosenProbability };
 }
 
 function checkStep4(piano, keyToCheck) {
@@ -81,12 +84,12 @@ function evaluateSequence(roundStart, keymap, correctSequence) {
 
 		typedCharacters += elem.key;
 		if (typedCharacters === correctSequence) {
-			updatedEventLogs.push({type: "correctSequence", time: performance.now(), sequence: correctSequence, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
+			updatedEventLogs.push({ type: "correctSequence", time: performance.now(), sequence: correctSequence, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
 			res = 1;
 			break;
 		} else {
 			if (!correctSequence.toLowerCase().startsWith(typedCharacters.toLowerCase())) {
-				updatedEventLogs.push({type: "incorrectSequence", time: performance.now(), sequence: typedCharacters, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
+				updatedEventLogs.push({ type: "incorrectSequence", time: performance.now(), sequence: typedCharacters, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
 				res = 2;
 				break;
 			}
@@ -131,7 +134,7 @@ function checkStep19(piano) {
 
 		typedCharacters += elem.key;
 		if (typedCharacters === correctSequence) {
-			updatedEventLogs.push({type: "correctSequence", time: performance.now(), sequence: correctSequence, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
+			updatedEventLogs.push({ type: "correctSequence", time: performance.now(), sequence: correctSequence, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
 			break;
 		} else {
 			if (!correctSequence.toLowerCase().startsWith(typedCharacters.toLowerCase())) {
@@ -142,7 +145,7 @@ function checkStep19(piano) {
 	}
 
 	if (wasIncorrectSequence && notesPlayed === 4) {
-		updatedEventLogs.push({type: "incorrectSequence", time: performance.now(), sequence: typedCharacters, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
+		updatedEventLogs.push({ type: "incorrectSequence", time: performance.now(), sequence: typedCharacters, round: globalThis.pageConfig.setup.round, trial: globalThis.pageConfig.setup.trial, mouse: false });
 	}
 
 	if (updatedEventLogs.length > 0) {
@@ -155,7 +158,20 @@ function checkStep19(piano) {
 }
 
 function timeoutManager(evt) {
-	globalThis.pageConfig.setup.round = 21;
+	const activePiano = document.querySelector(`section:not([hidden]) piano-player`);
+	const rolledDie = checkProbabilityOfWin(activePiano);
+	eventLog.push({
+		type: "timedOut",
+		time: performance.now(),
+		round: globalThis.pageConfig.setup.round,
+		trial: globalThis.pageConfig.setup.trial,
+		sequence: activePiano.notes,
+		mouse: false,
+		activeProbability: rolledDie.activeProbability,
+		unchosenProbability: rolledDie.unchosenProbability,
+		mcsScore: rolledDie.mcsScore
+	});
+	globalThis.pageConfig.setup.round = 22;
 
 	return navigateToPage(evt);
 }
@@ -180,22 +196,38 @@ function countCorrectSequences(piano, requiredTrials) {
 	return trials;
 }
 
-function gamePage(icon, evt) {
-	globalThis.pageConfig.setup.round = 18;
+function gamePage(icon, evt, key) {
+	const lang = getLangForTask();
+	globalThis.pageConfig.setup.round = 19;
 	globalThis.pageConfig.setup.trial++;
 	document.querySelector(".page-19 > piano-player").dataset.sequence = icon;
 
+	const activePiano = document.querySelector(".page-19 > piano-player");
 	if (icon === 1) {
-		document.querySelector(".page-19 > piano-player").notes = "gjhk";
-		document.querySelector(".page-19 > .active-icon").src = "https://oshah81.github.io/rtanx/fractal1.png";
-		document.querySelector(".page-19 > .statusLbl").textContent = "Play Sequence 1";
+		activePiano.notes = "gjhk";
+		document.querySelector(".page-19 > .active-icon").src = "https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_byJfzLUIsrGJw6W&V=1612980021";
+		switch (lang) {
+			case "it":
+				document.querySelector(".page-19 > .statusLbl").textContent = "Esegui la Sequenza 1";
+				break;
+			default:
+				document.querySelector(".page-19 > .statusLbl").textContent = "Play Sequence 1";
+		}
+
 	} else {
-		document.querySelector(".page-19 > piano-player").notes = "kgjh";
-		document.querySelector(".page-19 > .active-icon").src = "https://oshah81.github.io/rtanx/fractal2.png";
-		document.querySelector(".page-19 > .statusLbl").textContent = "Play Sequence 2";
+		activePiano.notes = "kgjh";
+		document.querySelector(".page-19 > .active-icon").src = "https://goldpsych.eu.qualtrics.com/WRQualtricsControlPanel_rel/Graphic.php?IM=IM_eOPh8J8BPOgcJvM&V=1612980058";
+		switch (lang) {
+			case "it":
+				document.querySelector(".page-19 > .statusLbl").textContent = "Esegui la Sequenza 2";
+				break;
+			default:
+				document.querySelector(".page-19 > .statusLbl").textContent = "Play Sequence 2";
+		}
 	}
 
-	return navigateToPage(evt);
+	res = navigateToPage(evt);
+	return res;
 }
 
 function keyDownManager(evt, key) {
@@ -209,58 +241,80 @@ function keyDownManager(evt, key) {
 		pressedKeys.add(key);
 	}
 
-	const activePiano = document.querySelector(`section:not([hidden]) piano-player`);
-	if (activePiano) {
-		if (key === "F1") {
-			evt.preventDefault();
-			evt.stopPropagation();
-			activePiano.playNextRound();
-			return false;
-		}
-
-		activePiano.keyNotePressed(evt, key);
+	if (key === " ") {
+		evt.preventDefault();
+		evt.stopPropagation();
 	}
+
+	const prm = new Promise(resolve => {
+		if (!document.querySelector(".page-18").hidden || !document.querySelector(".page-24").hidden) {
+			if (key === "g") {
+				gamePage(1, evt, key).then(() => {
+					resolve();
+				});
+			} else if (key === "k") {
+				gamePage(2, evt, key).then(() => {
+					resolve();
+				});
+			} else {
+				resolve();
+			}
+		} else {
+			resolve();
+		}
+	}).then(() => {
+		const activePiano = document.querySelector(`section:not([hidden]) piano-player`);
+		if (activePiano) {
+			activePiano.keyNotePressed(evt, key);
+		}
+	});
 }
 
 
-async function keyUpManager(evt, key) {
-	const wasMouse = evt.type.startsWith("mouse") || evt.type.startsWith("click");
+function keyUpManager(evt, key) {
+	const lang = getLangForTask();
+	const wasMouse = evt.type.startsWith("mouse") || evt.type.startsWith("click") || evt.type.startsWith("touch");
 	pressedKeys.delete(key);
 
-	if (!document.getElementById("nextButton").disabled) {
-		if (key === "Return" || key === "Enter" || key === "Control" || key === "n" || key === "N") {
-			globalThis.onNextPage(evt);
+	const activePiano = document.querySelector(`section:not([hidden]) piano-player`);
+
+	if (activePiano) {
+		if (key === "q" || key === "Q") {
+			evt.preventDefault();
+			evt.stopPropagation();
+			document.querySelector("countdown-clock").pause();
+			activePiano.playNextRound().then(() => {
+				document.querySelector("countdown-clock").resume();
+			});
 			return;
 		}
-		if (!document.querySelector(".page-20").hidden || !document.querySelector(".page-21").hidden || !document.querySelector(".page-22").hidden) {
-			if (key === "1" || key === "2") {
+
+		activePiano.keyNoteUnPressed(evt, key);
+
+		if (!document.querySelector(".page-2").hidden) {
+			if (key === " " || key === "Enter" || key === "Return" || key === "Escape") {
+				evt.preventDefault();
+				evt.stopPropagation();
 				globalThis.onNextPage(evt);
-				return;
 			}
 		}
-	}
-
-	if (!document.querySelector(".page-17").hidden || !document.querySelector(".page-24").hidden) {
-		if (key === "1") {
-			gamePage(1, evt);
-		}
-		if (key === "2") {
-			gamePage(2, evt);
-		}
-	}
-
-	const activePiano = document.querySelector(`section:not([hidden]) piano-player`);
-	if (activePiano) {
-		activePiano.keyNoteUnPressed(evt, key);
 
 		if (!document.querySelector(".page-4").hidden) {
 			if (checkStep4(activePiano, "k")) {
+				globalThis.onNextPage(evt);
+			}
+			if (key === " " || key === "Enter" || key === "Return" || key === "Escape") {
+				evt.preventDefault();
+				evt.stopPropagation();
 				globalThis.onNextPage(evt);
 			}
 		}
 
 		if (!document.querySelector(".page-9").hidden) {
 			if (checkStep4(activePiano, "h")) {
+				globalThis.onNextPage(evt);
+			}
+			if (key === " " || key === "Enter" || key === "Return" || key === "Escape") {
 				globalThis.onNextPage(evt);
 			}
 		}
@@ -272,26 +326,47 @@ async function keyUpManager(evt, key) {
 				default:
 					break;
 				case 1: {
-					const requiredTrials = (await globalThis.pageConfig.configPromise).practicetrials;
-					const numCorrectSequences = countCorrectSequences(activePiano, requiredTrials);
-					if (numCorrectSequences == requiredTrials) {
-						globalThis.onNextPage(evt);
-					} else {
-						const statusLbl = document.querySelector(".page-6 > .statusLbl");
-						statusLbl.classList.remove("incorrect-msg");
-						statusLbl.classList.add("correct-msg");
-						statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more time";
-						if ((requiredTrials - numCorrectSequences) != 1) {
-							statusLbl.textContent = statusLbl.textContent + 's';
+					globalThis.pageConfig.configPromise.then(config => {
+						const requiredTrials = (config).practicetrials;
+						const numCorrectSequences = countCorrectSequences(activePiano, requiredTrials);
+						if (numCorrectSequences == requiredTrials) {
+							globalThis.onNextPage(evt);
+						} else {
+							const statusLbl = document.querySelector(".page-6 > .statusLbl");
+							statusLbl.classList.remove("incorrect-msg");
+							statusLbl.classList.add("correct-msg");
+							switch (lang) {
+								case "it":
+									if ((requiredTrials - numCorrectSequences) == 1) {
+										statusLbl.textContent = "Corretto! Ora esequi la sequenza un'ultima volta.";
+									} else {
+										statusLbl.textContent = "Corretto! Ora esequi la sequenza altre " + (requiredTrials - numCorrectSequences) + " volte";
+									}
+									break;
+								default:
+									if ((requiredTrials - numCorrectSequences) == 1) {
+										statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more time";
+									} else {
+										statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more times";
+									}
+									break;
+							}
 						}
-					}
+					});
 					break;
 				}
 				case 2: {
 					const statusLbl = document.querySelector(".page-6 > .statusLbl");
 					statusLbl.classList.remove("correct-msg");
 					statusLbl.classList.add("incorrect-msg");
-					statusLbl.textContent = "Something went wrong. Try again.";
+					switch (lang) {
+						case "it":
+							statusLbl.textContent = "Qualcosa è andato storto. Riprova.";
+							break;
+						default:
+							statusLbl.textContent = "Something went wrong. Try again.";
+							break;
+					}
 					break;
 				}
 			}
@@ -304,26 +379,47 @@ async function keyUpManager(evt, key) {
 				default:
 					break;
 				case 1: {
-					const requiredTrials = (await globalThis.pageConfig.configPromise).practicetrials;
-					const numCorrectSequences = countCorrectSequences(activePiano, requiredTrials);
-					if (numCorrectSequences == requiredTrials) {
-						globalThis.onNextPage(evt);
-					} else {
-						const statusLbl = document.querySelector(".page-11 > .statusLbl");
-						statusLbl.classList.remove("incorrect-msg");
-						statusLbl.classList.add("correct-msg");
-						statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more time";
-						if ((requiredTrials - numCorrectSequences) != 1) {
-							statusLbl.textContent = statusLbl.textContent + 's';
+					globalThis.pageConfig.configPromise.then(config => {
+						const requiredTrials = (config).practicetrials;
+						const numCorrectSequences = countCorrectSequences(activePiano, requiredTrials);
+						if (numCorrectSequences == requiredTrials) {
+							globalThis.onNextPage(evt);
+						} else {
+							const statusLbl = document.querySelector(".page-11 > .statusLbl");
+							statusLbl.classList.remove("incorrect-msg");
+							statusLbl.classList.add("correct-msg");
+							switch (lang) {
+								case "it":
+									if ((requiredTrials - numCorrectSequences) == 1) {
+										statusLbl.textContent = "Corretto! Ora esequi la sequenza un'ultima volta.";
+									} else {
+										statusLbl.textContent = "Corretto! Ora esequi la sequenza altre " + (requiredTrials - numCorrectSequences) + " volte";
+									}
+									break;
+								default:
+									if ((requiredTrials - numCorrectSequences) == 1) {
+										statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more time";
+									} else {
+										statusLbl.textContent = "Correct! Now play it again " + (requiredTrials - numCorrectSequences) + " more times";
+									}
+									break;
+							}
 						}
-					}
+					});
 					break;
 				}
 				case 2: {
 					const statusLbl = document.querySelector(".page-11 > .statusLbl");
 					statusLbl.classList.remove("correct-msg");
 					statusLbl.classList.add("incorrect-msg");
-					statusLbl.textContent = "Something went wrong. Try again.";
+					switch (lang) {
+						case "it":
+							statusLbl.textContent = "Qualcosa è andato storto. Riprova.";
+							break;
+						default:
+							statusLbl.textContent = "Something went wrong. Try again.";
+							break;
+					}
 					break;
 				}
 			}
@@ -334,16 +430,63 @@ async function keyUpManager(evt, key) {
 			if (seqResult >= 4) {
 				const numCorrectSequences = countCorrectSequences(activePiano, 1);
 				const rolledDie = checkProbabilityOfWin(activePiano);
+				let roundResult = "unknown";
 
-				if (rolledDie && numCorrectSequences === 1) {
-					globalThis.pageConfig.setup.score = globalThis.pageConfig.setup.score + 10;
-					globalThis.pageConfig.setup.round = 21;
+				if (numCorrectSequences !== 1) {
+					roundResult = "incorrectPlay";
+				} else if (activePiano.dataset.sequence == 1) {
+					roundResult = rolledDie.mcsScore <= rolledDie.activeProbability ? "winRound" : "lostRound";
 				} else {
+					roundResult = rolledDie.mcsScore > rolledDie.activeProbability ? "winRound" : "lostRound";
+				}
+
+				eventLog.push({
+					type: roundResult,
+					time: performance.now(),
+					round: globalThis.pageConfig.setup.round,
+					trial: globalThis.pageConfig.setup.trial,
+					mouse: wasMouse,
+					activeProbability: rolledDie.activeProbability,
+					sequence: activePiano.notes,
+					unchosenProbability: rolledDie.unchosenProbability,
+					mcsScore: rolledDie.mcsScore
+				});
+				if (roundResult === "winRound") {
+					globalThis.pageConfig.setup.score = globalThis.pageConfig.setup.score + 5;
+					globalThis.pageConfig.setup.hintCount = 0;
+					globalThis.pageConfig.setup.round = 21;
+					for (const hints of document.querySelectorAll(".hint-text")) {
+						hints.textContent = "";
+						hints.hidden = true;
+					}
+				} else {
+					globalThis.pageConfig.setup.hintCount++;
+					for (const hints of document.querySelectorAll(".hint-text")) {
+						hints.hidden = (globalThis.pageConfig.setup.hintCount < 5);
+						if (roundResult === "lostRound") {
+							hints.innerHTML = "";
+						}
+						else {
+							switch (lang) {
+								case "it":
+									hints.innerHTML = "Suggerimento: stai premendo i <strong>tasti sbagliati</strong>.<br/><i>Premi &quot;q&quot; per farti ricordare la sequenza dal computer. </i>";
+									break;
+								default:
+									hints.innerHTML = "Hint: <strong>wrong notes</strong> played.<br/><i>Press &quot;q&quot; to be reminded of the sequence</i>";
+									break;
+							}
+						}
+					}
 					globalThis.pageConfig.setup.round = 20;
 				}
 				navigateToPage(evt);
 			}
 		}
+		return;
+	}
+
+	if (!document.getElementById("nxtbtn").disabled) {
+		globalThis.onNextPage(evt);
 	}
 }
 
@@ -366,74 +509,202 @@ function splashWait(timeToWait, hideText) {
 }
 
 function handleRound23() {
-	return new Promise((resolve, reject) => {
-
+	return new Promise(resolve => {
 		resolve();
 	});
 }
 
-function handleRound24() {
-	document.querySelector(".page-24 .scoreboard").textContent = "Your score: " + globalThis.pageConfig.setup.score + " pts";
+function handleRound24(lang) {
+	return new Promise(resolve => {
+		const trial = globalThis.pageConfig.setup.trial;
+		globalThis.pageConfig.configPromise.then(config => {
+			switch (lang) {
+				case "it":
+					document.querySelector(".page-24 .scoreboard").textContent =
+						"Round " + trial + " di " + config.totaltrials;
+					break;
+				default:
+					document.querySelector(".page-24 .scoreboard").textContent =
+						"Round " + trial + " of " + config.totaltrials + ".";
+					break;
+			}
+			if (trial > config.totaltrials) {
+				/* The next button will be disabled for the duration of this experiment. */
+				codaGame().then(() => {
+					resolve();
+				});
+			} else {
+				resolve();
+			}
+		});
+	});
 }
 
 function navigateToPage(evt) {
+	const lang = getLangForTask();
+	const roundWaitTime = 3000;
 	const round = globalThis.pageConfig.setup.round;
-	const wasMouse = evt && (evt.type.startsWith("mouse") || evt.type.startsWith("click"));
+	const wasMouse = evt && (evt.type.startsWith("mouse") || evt.type.startsWith("click") || evt.type.startsWith("touch"));
 	eventLog.push({ type: "startNextRound", time: performance.now(), round: round, trial: globalThis.pageConfig.setup.trial, mouse: wasMouse });
 
-	for (let item of document.querySelectorAll(".QuestionBody section[class*='page-'")) {
+	for (let item of document.querySelectorAll(".core-experiment section[class*='page-'")) {
 		item.hidden = true;
 	}
 
 	const prm1 = globalThis.pageConfig.save();
-	prm1.then(() => {
-		document.querySelector(".page-" + parseInt(round)).hidden = false;
 
-		if (round === 4) {
-			const activePiano = document.querySelector("section.page-4 piano-player");
-			activePiano.playNextRound();
-		} else if (round === 6) {
-			document.getElementById("nextButton").disabled = true;
-		} else if (round == 7) {
-			document.getElementById("nextButton").disabled = false;
-		} else if (round === 9) {
-			const activePiano = document.querySelector("section.page-9 piano-player");
-			activePiano.playNextRound();
-		} else if (round === 11) {
-			document.getElementById("nextButton").disabled = true;
-		} else if (round === 12) {
-			document.getElementById("nextButton").hidden = false;
-			document.getElementById("nextButton").disabled = false;
-		} else if (round === 17) {
-			document.getElementById("nextButton").hidden = true;
-			document.getElementById("nextButton").disabled = true;
-		} else if (round === 18) {
-			document.getElementById("nextButton").hidden = true;
-			document.getElementById("nextButton").disabled = true;
-			splashWait(0.5, true).then(() => {
+	document.querySelector(".page-" + parseInt(round)).hidden = false;
+
+	if (round === 1) {
+		document.getElementById("nxtbtn").hidden = false;
+		document.getElementById("nxtbtn").disabled = false;
+	} else if (round === 2) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o la barra spaziatrice per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
+				break;
+		}
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		wait(1000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 3) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o qualsiasi altro tasto per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
+				break;
+		}
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		wait(1000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 4) {
+		const activePiano = document.querySelector("section.page-4 piano-player");
+		activePiano.playNextRound();
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o la barra spaziatrice per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
+				break;
+		}
+	} else if (round == 5) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o qualsiasi altro tasto per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
+				break;
+		}
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		wait(2000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 6) {
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+	} else if (round == 7) {
+		wait(2000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 9) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o la barra spaziatrice per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press space to continue";
+				break;
+		}
+		const activePiano = document.querySelector("section.page-9 piano-player");
+		activePiano.playNextRound();
+	} else if (round === 10) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Premi qui o qualsiasi altro tasto per continuare";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Click here or press any key to continue";
+				break;
+		}
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		wait(2000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 11) {
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+	} else if (round === 12) {
+		wait(2000).then(() => {
+			document.getElementById("nxtbtn").hidden = false;
+			document.getElementById("nxtbtn").disabled = false;
+		});
+	} else if (round === 13) {
+		switch (lang) {
+			case "it":
+				document.getElementById("nxtbtn").textContent = "Continua >";
+				break;
+			default:
+				document.getElementById("nxtbtn").textContent = "Continue >";
+				break;
+		}
+	} else if (round === 18) {
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		globalThis.pageConfig.setup.trial = 1;
+	} else if (round === 19) {
+		document.querySelector(".page-19 > countdown-clock").startTimer();
+	} else if (round === 20 || round === 21 || round === 22) {
+		document.querySelector(".page-19 > countdown-clock").stopTimer();
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		const splashWaitPrm = wait(roundWaitTime);
+		handleRound23().then(x => {
+			splashWaitPrm.then(() => {
 				globalThis.onNextPage(evt);
 			});
-		} else if (round === 19) {
-			document.querySelector(".page-19 > countdown-clock").startTimer();
-		} else if (round === 20 || round === 21 || round === 22) {
-			document.querySelector(".page-19 > countdown-clock").stopTimer();
-			document.getElementById("nextButton").hidden = false;
-			document.getElementById("nextButton").disabled = false;
-		} else if (round === 23) {
-			document.getElementById("nextButton").hidden = true;
-			document.getElementById("nextButton").disabled = true;
-			const splashWaitPrm = wait(2000);
-			handleRound23().then(() => {
-				splashWaitPrm.then(() => {
-					globalThis.onNextPage(evt);
-				});
-			});
-		} else if (round === 24) {
-			document.getElementById("nextButton").hidden = true;
-			document.getElementById("nextButton").disabled = true;
-			handleRound24();
-		}
-	});
+		});
+	} else if (round === 23) {
+		globalThis.onNextPage(evt);
+	} else if (round === 24) {
+		document.getElementById("nxtbtn").hidden = true;
+		document.getElementById("nxtbtn").disabled = true;
+		document.querySelector(".page-19 piano-player").clearKeyStates();
+		handleRound24(lang);
+	}
+
+	return prm1;
+}
+
+
+function onNextPage(event) {
+	let round = globalThis.pageConfig.setup.round;
+	if (round === 24) {
+		round = 18;
+	} else if (round === 20 || round === 21 || round === 22) {
+		round = 23;
+	} else {
+		round++;
+	}
+	globalThis.pageConfig.setup.round = round;
+	navigateToPage(event);
 }
 
 
